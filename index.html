@@ -192,45 +192,14 @@
     </form>
   </div>
 
-  <!-- Step 4: Payment Page -->
+  <!-- Step 4: Payment - Redirects to Stripe -->
   <div class="container hidden" id="paymentPage">
     <div class="payment-screen">
-      <h2 class="payment-title">Payment</h2>
+      <h2 class="payment-title">Redirecting to Payment...</h2>
       <div class="payment-summary" id="paymentSummary"></div>
-      <div class="payment-form">
-        <div class="form-group">
-          <label for="cardName">Name on Card*:</label>
-          <input type="text" id="cardName" required placeholder="John Doe">
-        </div>
-        <div class="form-group">
-          <label for="cardNumber">Card Number*:</label>
-          <input type="text" id="cardNumber" required placeholder="1234 5678 9012 3456" maxlength="19">
-        </div>
-        <div class="form-group payment-row">
-          <div>
-            <label for="cardExpiry">Expiry*:</label>
-            <input type="text" id="cardExpiry" required placeholder="MM/YY" maxlength="5">
-          </div>
-          <div>
-            <label for="cardCvv">CVV*:</label>
-            <input type="text" id="cardCvv" required placeholder="123" maxlength="4">
-          </div>
-        </div>
-        <button type="button" class="btn btn-pay btn-full" id="completePaymentBtn">Complete Payment</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Step 5: Order Confirmation -->
-  <div class="container hidden" id="confirmationPage">
-    <div class="confirmation-screen">
-      <div class="confirm-icon">&#10004;</div>
-      <h2 class="confirm-title">Order Confirmed</h2>
-      <div class="order-details" id="orderDetails"></div>
-      <div class="tube-section" id="tubeSection"></div>
-      <div class="print-actions">
-        <button type="button" class="btn btn-pay btn-full" id="printLabelBtn">&#128424; Print Label</button>
-        <button type="button" class="btn btn-cancel btn-full" id="printInvoiceBtn">&#128424; Print Invoice</button>
+      <p style="text-align:center;color:#666;margin-top:16px;">You will be redirected to our secure payment portal.</p>
+      <div style="text-align:center;margin-top:20px;">
+        <div class="spinner"></div>
       </div>
     </div>
   </div>
