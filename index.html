@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TestGO - Self Pay Lab Test Registration</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <!-- Top Brand Bar -->
+  <div class="brand-bar">
+    <div class="brand-bar-inner">
+      <img src="logo.png" alt="TestGO - Devansh Lab Werks | MicroGen Health" class="brand-logo-img">
+    </div>
+  </div>
+
+  <!-- Step 1: Welcome Landing (after QR scan) -->
+  <div class="container" id="welcomePage">
+    <div class="welcome-screen">
+      <div class="welcome-icon">&#128172;</div>
+      <h2 class="welcome-title">Welcome to TestGO Self-Pay</h2>
+      <p class="welcome-subtitle">You've successfully scanned the registration code.</p>
+      <ul class="welcome-steps">
+        <li><span class="step-num">1</span> Select your lab tests</li>
+        <li><span class="step-num">2</span> Enter your details</li>
+        <li><span class="step-num">3</span> Sign &amp; pay securely</li>
+      </ul>
+      <button class="btn btn-pay btn-get-started" id="getStartedBtn">Get Started</button>
+    </div>
+  </div>
+
+  <!-- Step 2 & 3: Registration Form -->
+  <div class="container hidden" id="registrationPage">
+    <form id="selfPayForm" novalidate>
+      <!-- Test Selection -->
+      <section class="section">
+        <h3 class="section-title">Select test(s) to order</h3>
+        <div class="test-list" id="testList">
+          <!-- Tests will be rendered by JS -->
+        </div>
+      </section>
+
+      <!-- Participant Details -->
+      <section class="section">
+        <h3 class="section-subtitle">Participant Details</h3>
+
+        <div class="form-group">
+          <label for="email">E-mail*:</label>
+          <input type="email" id="email" required placeholder="">
+          <span class="error-msg" data-for="email">Email is required</span>
+          <p class="helper-text">It is important that you provide correct email address. We will be sending results to this email address.</p>
+        </div>
+
+        <div class="form-group">
+          <label for="firstName">First name*:</label>
+          <input type="text" id="firstName" required>
+          <span class="error-msg" data-for="firstName">First Name is required!</span>
+        </div>
+
+        <div class="form-group">
+          <label for="lastName">Last name*:</label>
+          <input type="text" id="lastName" required>
+          <span class="error-msg" data-for="lastName">Last Name is required!</span>
+        </div>
+
+        <div class="form-group">
+          <label>Gender*:</label>
+          <div class="gender-options">
+            <label class="gender-option">
+              <input type="radio" name="gender" value="Male" required>
+              <span>Male</span>
+            </label>
+            <label class="gender-option">
+              <input type="radio" name="gender" value="Female">
+              <span>Female</span>
+            </label>
+            <label class="gender-option">
+              <input type="radio" name="gender" value="Unknown">
+              <span>Unknown</span>
+            </label>
+          </div>
+          <span class="error-msg" data-for="gender">Gender is required</span>
+        </div>
+
+        <div class="form-group">
+          <label for="dob">Date of Birth*:</label>
+          <input type="text" id="dob" required placeholder="mm-dd-yyyy" maxlength="10">
+          <span class="error-msg" data-for="dob">Date of Birth is required</span>
+        </div>
+
+        <div class="form-group">
+          <label for="phone">Phone*:</label>
+          <input type="tel" id="phone" required>
+          <span class="error-msg" data-for="phone">Phone Number is required</span>
+        </div>
+
+        <div class="form-group">
+          <label for="ssn">SSN(Optional) :</label>
+          <input type="text" id="ssn" placeholder="000-00-0000" maxlength="11">
+        </div>
+
+        <div class="form-group">
+          <label for="race">Race*:</label>
+          <select id="race" required>
+            <option value="">-- Select --</option>
+            <option value="American Indian or Alaska Native">American Indian or Alaska Native</option>
+            <option value="Asian">Asian</option>
+            <option value="Black or African American">Black or African American</option>
+            <option value="Native Hawaiian or Other Pacific Islander">Native Hawaiian or Other Pacific Islander</option>
+            <option value="White">White</option>
+            <option value="Other">Other</option>
+          </select>
+          <span class="error-msg" data-for="race">Race is required</span>
+        </div>
+
+        <div class="form-group">
+          <label for="ethnicity">Ethnicity*:</label>
+          <select id="ethnicity" required>
+            <option value="">-- Select --</option>
+            <option value="Hispanic or Latino">Hispanic or Latino</option>
+            <option value="Not Hispanic or Latino">Not Hispanic or Latino</option>
+          </select>
+          <span class="error-msg" data-for="ethnicity">Ethnicity is required</span>
+        </div>
+
+        <div class="form-group">
+          <label for="address">Address*:</label>
+          <div class="address-row">
+            <input type="text" id="addressSearch" placeholder="Search a Location" class="address-search">
+            <input type="text" id="address" required placeholder="">
+          </div>
+          <span class="error-msg" data-for="address">Address are required!</span>
+        </div>
+
+        <div class="form-group">
+          <label for="city">City*:</label>
+          <input type="text" id="city" required>
+          <span class="error-msg" data-for="city">City is required!</span>
+        </div>
+
+        <div class="form-group">
+          <label for="state">State*:</label>
+          <input type="text" id="state" required>
+          <span class="error-msg" data-for="state">State is required!</span>
+        </div>
+
+        <div class="form-group">
+          <label for="zipcode">Zipcode*:</label>
+          <input type="text" id="zipcode" required maxlength="10">
+          <span class="error-msg" data-for="zipcode">Zipcode is required!</span>
+        </div>
+
+        <div class="form-group">
+          <label for="insurance">Insurance*:</label>
+          <input type="text" id="insurance" value="Self Pay" readonly>
+        </div>
+      </section>
+
+      <!-- Disclaimer -->
+      <section class="section">
+        <h3 class="disclaimer-title">DISCLAIMER:</h3>
+        <div class="disclaimer-text">
+          <p>In consideration for receiving the opportunity to participate in Lab testing (hereinafter "Testing"), which is provided through TestGO, powered by Devansh Lab Werks (DLW) and MicroGen Health (collectively the "Company"), I hereby release, waive, discharge, covenant not to sue, and agree to hold harmless for any and all purposes Company and their healthcare staff, members, shareholders, officers, servants, agents, volunteers, or employees (herein referred to as "indemnities") from any and all liabilities, claims, demands, injuries (including death), or damages, including court costs and attorney's fees and expenses, that may be sustained by me while participating in Testing, while traveling to and from the Testing, or while on the premises owned or leased by Indemnities.</p>
+          <p>I am also fully aware that the Company is not providing medical care or giving a medical diagnosis with Testing and that I should consult my doctor or go to an emergency room if I have a serious symptom and/or to obtain medical advice from my own doctor as to the results of the Testing.</p>
+          <p>I hereby waive my rights regarding protected health information under HIPAA, to the extent necessary to complete the Testing and to allow the Company to provide the results of Testing to (1) the organization which has arranged for the testing, and (2) local and state public health authorities (which may result in further direct communication from those entities to me for further follow-up and contact tracing). Protected health information will not be reused or disclosed by the Company to any person or entity other than above, except as required by law.</p>
+          <p>By Signing, I am agreeing to voluntarily testing. In signing this agreement, I acknowledge and represent that I have read it, understand, and sign it voluntarily.</p>
+        </div>
+      </section>
+
+      <!-- Signature -->
+      <section class="section">
+        <div class="form-group">
+          <label>Participant Signature*:</label>
+          <div class="signature-wrapper">
+            <canvas id="signatureCanvas" width="750" height="250"></canvas>
+            <span class="error-msg signature-error" data-for="signature">Signature is required.</span>
+          </div>
+          <button type="button" class="btn-clear" id="clearSignature">Clear</button>
+        </div>
+      </section>
+
+      <!-- Total & Actions -->
+      <section class="section">
+        <p class="total-amount">Total Amount To Charge: <span id="totalAmount">$ 0.00</span></p>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-pay">Pay</button>
+          <button type="button" class="btn btn-cancel" id="cancelBtn">Cancel</button>
+        </div>
+      </section>
+    </form>
+  </div>
+
+  <!-- Step 4: Payment Page -->
+  <div class="container hidden" id="paymentPage">
+    <div class="payment-screen">
+      <h2 class="payment-title">Payment</h2>
+      <div class="payment-summary" id="paymentSummary"></div>
+      <div class="payment-form">
+        <div class="form-group">
+          <label for="cardName">Name on Card*:</label>
+          <input type="text" id="cardName" required placeholder="John Doe">
+        </div>
+        <div class="form-group">
+          <label for="cardNumber">Card Number*:</label>
+          <input type="text" id="cardNumber" required placeholder="1234 5678 9012 3456" maxlength="19">
+        </div>
+        <div class="form-group payment-row">
+          <div>
+            <label for="cardExpiry">Expiry*:</label>
+            <input type="text" id="cardExpiry" required placeholder="MM/YY" maxlength="5">
+          </div>
+          <div>
+            <label for="cardCvv">CVV*:</label>
+            <input type="text" id="cardCvv" required placeholder="123" maxlength="4">
+          </div>
+        </div>
+        <button type="button" class="btn btn-pay btn-full" id="completePaymentBtn">Complete Payment</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 5: Order Confirmation -->
+  <div class="container hidden" id="confirmationPage">
+    <div class="confirmation-screen">
+      <div class="confirm-icon">&#10004;</div>
+      <h2 class="confirm-title">Order Confirmed</h2>
+      <div class="order-details" id="orderDetails"></div>
+      <div class="tube-section" id="tubeSection"></div>
+      <div class="print-actions">
+        <button type="button" class="btn btn-pay btn-full" id="printLabelBtn">&#128424; Print Label</button>
+        <button type="button" class="btn btn-cancel btn-full" id="printInvoiceBtn">&#128424; Print Invoice</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
