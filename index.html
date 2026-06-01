@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TestGO - Self Pay Lab Test Registration</title>
+  <title>Self Pay Lab Test Registration</title>
   <link rel="stylesheet" href="styles.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -12,7 +12,7 @@
   <!-- Top Brand Bar -->
   <div class="brand-bar">
     <div class="brand-bar-inner">
-      <img src="logo.png" alt="TestGO - Devansh Lab Werks | MicroGen Health" class="brand-logo-img">
+      <h1 class="brand-title">Self Pay Lab Registration</h1>
     </div>
   </div>
 
@@ -20,7 +20,7 @@
   <div class="container" id="welcomePage">
     <div class="welcome-screen">
       <div class="welcome-icon">&#128172;</div>
-      <h2 class="welcome-title">Welcome to TestGO Self-Pay</h2>
+      <h2 class="welcome-title">Welcome to Self-Pay Lab Registration</h2>
       <p class="welcome-subtitle">You've successfully scanned the registration code.</p>
       <ul class="welcome-steps">
         <li><span class="step-num">1</span> Select your lab tests</li>
@@ -96,42 +96,12 @@
           <span class="error-msg" data-for="phone">Phone Number is required</span>
         </div>
 
-        <div class="form-group">
-          <label for="ssn">SSN(Optional) :</label>
-          <input type="text" id="ssn" placeholder="000-00-0000" maxlength="11">
-        </div>
 
-        <div class="form-group">
-          <label for="race">Race*:</label>
-          <select id="race" required>
-            <option value="">-- Select --</option>
-            <option value="American Indian or Alaska Native">American Indian or Alaska Native</option>
-            <option value="Asian">Asian</option>
-            <option value="Black or African American">Black or African American</option>
-            <option value="Native Hawaiian or Other Pacific Islander">Native Hawaiian or Other Pacific Islander</option>
-            <option value="White">White</option>
-            <option value="Other">Other</option>
-          </select>
-          <span class="error-msg" data-for="race">Race is required</span>
-        </div>
-
-        <div class="form-group">
-          <label for="ethnicity">Ethnicity*:</label>
-          <select id="ethnicity" required>
-            <option value="">-- Select --</option>
-            <option value="Hispanic or Latino">Hispanic or Latino</option>
-            <option value="Not Hispanic or Latino">Not Hispanic or Latino</option>
-          </select>
-          <span class="error-msg" data-for="ethnicity">Ethnicity is required</span>
-        </div>
 
         <div class="form-group">
           <label for="address">Address*:</label>
-          <div class="address-row">
-            <input type="text" id="addressSearch" placeholder="Search a Location" class="address-search">
-            <input type="text" id="address" required placeholder="">
-          </div>
-          <span class="error-msg" data-for="address">Address are required!</span>
+          <input type="text" id="address" required placeholder="e.g. 123 Main Street">
+          <span class="error-msg" data-for="address">Address is required!</span>
         </div>
 
         <div class="form-group">
@@ -153,8 +123,55 @@
         </div>
 
         <div class="form-group">
-          <label for="insurance">Insurance*:</label>
+          <label for="insurance">Payment*:</label>
           <input type="text" id="insurance" value="Self Pay" readonly>
+        </div>
+
+        <div class="form-group">
+          <label for="race">Race:</label>
+          <select id="race">
+            <option value="">-- Select --</option>
+            <option value="American Indian or Alaska Native">American Indian or Alaska Native</option>
+            <option value="Asian">Asian</option>
+            <option value="Black or African American">Black or African American</option>
+            <option value="Native Hawaiian or Other Pacific Islander">Native Hawaiian or Other Pacific Islander</option>
+            <option value="White">White</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="ethnicity">Ethnicity:</label>
+          <select id="ethnicity">
+            <option value="">-- Select --</option>
+            <option value="Hispanic or Latino">Hispanic or Latino</option>
+            <option value="Not Hispanic or Latino">Not Hispanic or Latino</option>
+          </select>
+        </div>
+      </section>
+
+      <!-- Provider Information -->
+      <section class="section">
+        <h3 class="section-subtitle">Provider Information</h3>
+
+        <div class="form-group">
+          <label for="providerName">Provider Name:</label>
+          <input type="text" id="providerName" placeholder="">
+        </div>
+
+        <div class="form-group">
+          <label for="providerNPI">NPI:</label>
+          <input type="text" id="providerNPI" placeholder="" maxlength="10">
+        </div>
+
+        <div class="form-group">
+          <label for="providerEmail">Provider Email:</label>
+          <input type="email" id="providerEmail" placeholder="">
+        </div>
+
+        <div class="form-group">
+          <label for="providerPhone">Provider Phone:</label>
+          <input type="tel" id="providerPhone" placeholder="">
         </div>
       </section>
 
@@ -162,7 +179,7 @@
       <section class="section">
         <h3 class="disclaimer-title">DISCLAIMER:</h3>
         <div class="disclaimer-text">
-          <p>In consideration for receiving the opportunity to participate in Lab testing (hereinafter "Testing"), which is provided through TestGO, powered by Devansh Lab Werks (DLW) and MicroGen Health (collectively the "Company"), I hereby release, waive, discharge, covenant not to sue, and agree to hold harmless for any and all purposes Company and their healthcare staff, members, shareholders, officers, servants, agents, volunteers, or employees (herein referred to as "indemnities") from any and all liabilities, claims, demands, injuries (including death), or damages, including court costs and attorney's fees and expenses, that may be sustained by me while participating in Testing, while traveling to and from the Testing, or while on the premises owned or leased by Indemnities.</p>
+          <p>In consideration for receiving the opportunity to participate in Lab testing (hereinafter "Testing"), which is provided by the Company, I hereby release, waive, discharge, covenant not to sue, and agree to hold harmless for any and all purposes the Company and their healthcare staff, members, shareholders, officers, servants, agents, volunteers, or employees (herein referred to as "indemnities") from any and all liabilities, claims, demands, injuries (including death), or damages, including court costs and attorney's fees and expenses, that may be sustained by me while participating in Testing, while traveling to and from the Testing, or while on the premises owned or leased by Indemnities.</p>
           <p>I am also fully aware that the Company is not providing medical care or giving a medical diagnosis with Testing and that I should consult my doctor or go to an emergency room if I have a serious symptom and/or to obtain medical advice from my own doctor as to the results of the Testing.</p>
           <p>I hereby waive my rights regarding protected health information under HIPAA, to the extent necessary to complete the Testing and to allow the Company to provide the results of Testing to (1) the organization which has arranged for the testing, and (2) local and state public health authorities (which may result in further direct communication from those entities to me for further follow-up and contact tracing). Protected health information will not be reused or disclosed by the Company to any person or entity other than above, except as required by law.</p>
           <p>By Signing, I am agreeing to voluntarily testing. In signing this agreement, I acknowledge and represent that I have read it, understand, and sign it voluntarily.</p>
@@ -174,7 +191,7 @@
         <div class="form-group">
           <label>Participant Signature*:</label>
           <div class="signature-wrapper">
-            <canvas id="signatureCanvas" width="750" height="250"></canvas>
+            <canvas id="signatureCanvas"></canvas>
             <span class="error-msg signature-error" data-for="signature">Signature is required.</span>
           </div>
           <button type="button" class="btn-clear" id="clearSignature">Clear</button>
@@ -192,12 +209,25 @@
     </form>
   </div>
 
-  <!-- Step 4: Payment - Redirects to Stripe -->
+  <!-- Step 3: Invoice / Order Summary -->
+  <div class="container hidden" id="invoicePage">
+    <div class="invoice-screen">
+      <h2 class="invoice-title">Order Summary</h2>
+      <div class="invoice-patient" id="invoicePatient"></div>
+      <div class="invoice-tests" id="invoiceTests"></div>
+      <div class="invoice-total" id="invoiceTotal"></div>
+      <div class="form-actions" style="justify-content:center;margin-top:24px;">
+        <button type="button" class="btn btn-pay btn-full" id="payNowBtn">Pay Now</button>
+      </div>
+      <p style="text-align:center;color:#888;font-size:12px;margin-top:12px;">You will be redirected to Stripe secure checkout.</p>
+    </div>
+  </div>
+
+  <!-- Step 4: Payment - Redirecting to Stripe -->
   <div class="container hidden" id="paymentPage">
     <div class="payment-screen">
       <h2 class="payment-title">Redirecting to Payment...</h2>
-      <div class="payment-summary" id="paymentSummary"></div>
-      <p style="text-align:center;color:#666;margin-top:16px;">You will be redirected to our secure payment portal.</p>
+      <p style="text-align:center;color:#666;margin-top:16px;">Please wait while we connect to the secure payment portal.</p>
       <div style="text-align:center;margin-top:20px;">
         <div class="spinner"></div>
       </div>

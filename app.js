@@ -103,20 +103,7 @@ function setupDOBInput() {
   });
 }
 
-// SSN formatting (000-00-0000)
-function setupSSNInput() {
-  const ssn = document.getElementById('ssn');
-  ssn.addEventListener('input', (e) => {
-    let val = e.target.value.replace(/\D/g, '');
-    if (val.length > 9) val = val.slice(0, 9);
-    if (val.length >= 6) {
-      val = val.slice(0, 3) + '-' + val.slice(3, 5) + '-' + val.slice(5);
-    } else if (val.length >= 4) {
-      val = val.slice(0, 3) + '-' + val.slice(3);
-    }
-    e.target.value = val;
-  });
-}
+
 
 // Signature Pad
 let signatureCanvas, signatureCtx, isDrawing = false, hasSigned = false;
@@ -124,19 +111,34 @@ let signatureCanvas, signatureCtx, isDrawing = false, hasSigned = false;
 function setupSignaturePad() {
   signatureCanvas = document.getElementById('signatureCanvas');
   signatureCtx = signatureCanvas.getContext('2d');
+  let canvasReady = false;
 
-  function resizeCanvas() {
-    const rect = signatureCanvas.getBoundingClientRect();
-    signatureCanvas.width = rect.width * window.devicePixelRatio;
-    signatureCanvas.height = rect.height * window.devicePixelRatio;
-    signatureCtx.scale(window.devicePixelRatio, window.devicePixelRatio);
+  function initCanvas() {
+    if (canvasReady) return;
+    const wrapper = signatureCanvas.parentElement;
+    const width = wrapper.clientWidth || 300;
+    const height = 200;
+    const dpr = window.devicePixelRatio || 1;
+    signatureCanvas.style.width = width + 'px';
+    signatureCanvas.style.height = height + 'px';
+    signatureCanvas.width = width * dpr;
+    signatureCanvas.height = height * dpr;
+    signatureCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
     signatureCtx.strokeStyle = '#333';
     signatureCtx.lineWidth = 2;
     signatureCtx.lineCap = 'round';
     signatureCtx.lineJoin = 'round';
+    canvasReady = true;
   }
 
-  resizeCanvas();
+  // Observe when canvas becomes visible to init
+  const observer = new IntersectionObserver((entries) => {
+    if (entries[0].isIntersecting) {
+      initCanvas();
+      observer.disconnect();
+    }
+  });
+  observer.observe(signatureCanvas);
 
   function getPos(e) {
     const rect = signatureCanvas.getBoundingClientRect();
@@ -185,7 +187,8 @@ function setupSignaturePad() {
   signatureCanvas.addEventListener('touchend', () => { isDrawing = false; });
 
   document.getElementById('clearSignature').addEventListener('click', () => {
-    signatureCtx.clearRect(0, 0, signatureCanvas.width, signatureCanvas.height);
+    const dpr = window.devicePixelRatio || 1;
+    signatureCtx.clearRect(0, 0, signatureCanvas.width / dpr, signatureCanvas.height / dpr);
     hasSigned = false;
   });
 }
@@ -226,15 +229,7 @@ function validateForm() {
     isValid = false;
   }
 
-  ['race', 'ethnicity'].forEach(id => {
-    const select = document.getElementById(id);
-    if (!select.value) {
-      select.classList.add('invalid');
-      const errorEl = document.querySelector(`.error-msg[data-for="${id}"]`);
-      if (errorEl) errorEl.classList.add('visible');
-      isValid = false;
-    }
-  });
+
 
   if (!hasSigned) {
     const errorEl = document.querySelector('.error-msg[data-for="signature"]');
@@ -257,24 +252,47 @@ function generateOrderId() {
   return 'TG-' + ts + rand;
 }
 
-// Show payment page and redirect to Stripe
-function showPaymentPage(formData) {
-  const summary = document.getElementById('paymentSummary');
-  let html = '';
-  formData.tests.forEach(t => {
-    html += `<div class="summary-line"><span>${t.name}</span><span>$${t.price.toFixed(2)}</span></div>`;
+// Show invoice/order summary page
+function showInvoicePage() {
+  // Patient info
+  const patientHtml = `
+    <div class="detail-row"><span class="detail-label">Name</span><span class="detail-value">${orderData.firstName} ${orderData.lastName}</span></div>
+    <div class="detail-row"><span class="detail-label">DOB</span><span class="detail-value">${orderData.dob}</span></div>
+    <div class="detail-row"><span class="detail-label">Email</span><span class="detail-value">${orderData.email}</span></div>
+    <div class="detail-row"><span class="detail-label">Phone</span><span class="detail-value">${orderData.phone}</span></div>
+    <div class="detail-row"><span class="detail-label">Order ID</span><span class="detail-value">${orderData.orderId}</span></div>
+  `;
+  document.getElementById('invoicePatient').innerHTML = patientHtml;
+
+  // Tests list
+  let testsHtml = '';
+  orderData.tests.forEach(t => {
+    testsHtml += `<div class="summary-line"><span>${t.name}</span><span>$${t.price.toFixed(2)}</span></div>`;
   });
-  html += `<div class="summary-total"><span>Total</span><span>$${formData.total.toFixed(2)}</span></div>`;
-  summary.innerHTML = html;
+  document.getElementById('invoiceTests').innerHTML = testsHtml;
 
-  showPage('paymentPage');
+  // Total
+  document.getElementById('invoiceTotal').innerHTML = `<div class="summary-total"><span>Total</span><span>$${orderData.total.toFixed(2)}</span></div>`;
 
-  // Save order to localStorage
+  // Save order to localStorage (backup)
   const orders = JSON.parse(localStorage.getItem('testgo_orders') || '[]');
   orders.push(orderData);
   localStorage.setItem('testgo_orders', JSON.stringify(orders));
 
-  // Redirect to Stripe Checkout
+  // Save order to server
+  fetch('/.netlify/functions/save-order', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(orderData)
+  }).catch(() => {});
+
+  showPage('invoicePage');
+}
+
+// Redirect to Stripe payment
+function redirectToStripe() {
+  showPage('paymentPage');
+
   fetch('/.netlify/functions/create-checkout', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -291,12 +309,12 @@ function showPaymentPage(formData) {
       window.location.href = data.url;
     } else {
       alert('Payment error: ' + (data.error || 'Unknown error'));
-      showPage('registrationPage');
+      showPage('invoicePage');
     }
   })
   .catch(err => {
     alert('Could not connect to payment service. Please try again.');
-    showPage('registrationPage');
+    showPage('invoicePage');
   });
 }
 
@@ -322,21 +340,24 @@ function setupForm() {
       gender: document.querySelector('input[name="gender"]:checked').value,
       dob: document.getElementById('dob').value.trim(),
       phone: document.getElementById('phone').value.trim(),
-      ssn: document.getElementById('ssn').value.trim(),
-      race: document.getElementById('race').value,
-      ethnicity: document.getElementById('ethnicity').value,
       address: document.getElementById('address').value.trim(),
       city: document.getElementById('city').value.trim(),
       state: document.getElementById('state').value.trim(),
       zipcode: document.getElementById('zipcode').value.trim(),
       insurance: document.getElementById('insurance').value,
+      race: document.getElementById('race').value,
+      ethnicity: document.getElementById('ethnicity').value,
+      providerName: document.getElementById('providerName').value.trim(),
+      providerNPI: document.getElementById('providerNPI').value.trim(),
+      providerEmail: document.getElementById('providerEmail').value.trim(),
+      providerPhone: document.getElementById('providerPhone').value.trim(),
       signature: signatureCanvas.toDataURL(),
       total: Array.from(selectedTests).reduce((sum, i) => sum + labTests[i].price, 0)
     };
 
-    // Store and go to payment
+    // Store and go to invoice
     orderData = { ...formData, orderId: generateOrderId(), submittedAt: new Date().toLocaleString(), status: 'pending' };
-    showPaymentPage(formData);
+    showInvoicePage();
   });
 
   // Cancel button
@@ -364,9 +385,11 @@ document.addEventListener('DOMContentLoaded', () => {
     showPage('registrationPage');
   });
 
+  // Pay Now button on invoice page
+  document.getElementById('payNowBtn').addEventListener('click', redirectToStripe);
+
   renderTests();
   setupDOBInput();
-  setupSSNInput();
   setupSignaturePad();
   setupForm();
 });

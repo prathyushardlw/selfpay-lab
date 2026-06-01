@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TestGO - Orders</title>
+  <title>Orders</title>
   <link rel="stylesheet" href="styles.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
@@ -26,7 +26,7 @@
 <body>
   <div class="brand-bar">
     <div class="brand-bar-inner">
-      <img src="logo.png" alt="TestGO" class="brand-logo-img">
+      <h1 class="brand-title">Self Pay Lab Registration</h1>
     </div>
   </div>
 
@@ -39,12 +39,23 @@
   </div>
 
   <script>
-    function loadOrders() {
-      return JSON.parse(localStorage.getItem('testgo_orders') || '[]');
+    let allOrders = [];
+
+    async function loadOrders() {
+      try {
+        const res = await fetch('/.netlify/functions/get-orders');
+        if (res.ok) {
+          allOrders = await res.json();
+          return allOrders;
+        }
+      } catch (e) {}
+      // Fallback to localStorage
+      allOrders = JSON.parse(localStorage.getItem('testgo_orders') || '[]');
+      return allOrders;
     }
 
-    function renderOrders() {
-      const orders = loadOrders();
+    async function renderOrders() {
+      const orders = await loadOrders();
       const container = document.getElementById('ordersList');
 
       if (orders.length === 0) {
@@ -77,8 +88,7 @@
     }
 
     function printLabel(orderId) {
-      const orders = loadOrders();
-      const order = orders.find(o => o.orderId === orderId);
+      const order = allOrders.find(o => o.orderId === orderId);
       if (!order) return;
       const w = window.open('', '_blank', 'width=400,height=250');
       w.document.write(`<html><head><title>Label</title><style>body{margin:0;padding:16px;font-family:Arial,sans-serif;}.label{border:2px solid #000;padding:12px 16px;display:inline-block;}.label-name{font-size:18px;font-weight:bold;margin-bottom:4px;}.label-dob{font-size:14px;}.label-id{font-size:11px;color:#666;margin-top:4px;}</style></head><body><div class="label"><div class="label-name">${order.lastName}, ${order.firstName}</div><div class="label-dob">DOB: ${order.dob}</div><div class="label-id">${order.orderId}</div></div><script>window.onload=function(){window.print();}<\/script></body></html>`);
@@ -86,23 +96,21 @@
     }
 
     function printInvoice(orderId) {
-      const orders = loadOrders();
-      const order = orders.find(o => o.orderId === orderId);
+      const order = allOrders.find(o => o.orderId === orderId);
       if (!order) return;
       let rows = order.tests.map(t => `<tr><td>${t.name}</td><td style="text-align:right">$${t.price.toFixed(2)}</td></tr>`).join('');
       const w = window.open('', '_blank', 'width=600,height=700');
-      w.document.write(`<html><head><title>Invoice</title><style>body{margin:0;padding:24px;font-family:Arial,sans-serif;font-size:13px;}h2{margin:0 0 4px;font-size:18px;}.sub{color:#666;margin-bottom:16px;font-size:12px;}.info{margin-bottom:16px;}.info p{margin:2px 0;}table{width:100%;border-collapse:collapse;margin-bottom:12px;}th,td{padding:6px 8px;border-bottom:1px solid #ddd;text-align:left;}th{background:#f5f5f5;font-weight:600;}.tot td{border-top:2px solid #333;font-weight:bold;font-size:14px;}.ft{margin-top:20px;font-size:11px;color:#888;}</style></head><body><h2>TestGO - Self Pay Invoice</h2><div class="sub">Order: ${order.orderId} | Date: ${order.paidAt || order.submittedAt || ''}</div><div class="info"><p><strong>Patient:</strong> ${order.firstName} ${order.lastName}</p><p><strong>DOB:</strong> ${order.dob}</p><p><strong>Email:</strong> ${order.email}</p><p><strong>Phone:</strong> ${order.phone}</p></div><table><thead><tr><th>Test</th><th style="text-align:right">Amount</th></tr></thead><tbody>${rows}<tr class="tot"><td>Total</td><td style="text-align:right">$${order.total.toFixed(2)}</td></tr></tbody></table><div class="ft">Devansh Lab Werks | MicroGen Health — Thank you for choosing TestGO.</div><script>window.onload=function(){window.print();}<\/script></body></html>`);
+      w.document.write(`<html><head><title>Invoice</title><style>body{margin:0;padding:24px;font-family:Arial,sans-serif;font-size:13px;}h2{margin:0 0 4px;font-size:18px;}.sub{color:#666;margin-bottom:16px;font-size:12px;}.info{margin-bottom:16px;}.info p{margin:2px 0;}table{width:100%;border-collapse:collapse;margin-bottom:12px;}th,td{padding:6px 8px;border-bottom:1px solid #ddd;text-align:left;}th{background:#f5f5f5;font-weight:600;}.tot td{border-top:2px solid #333;font-weight:bold;font-size:14px;}.ft{margin-top:20px;font-size:11px;color:#888;}</style></head><body><h2>Self Pay Invoice</h2><div class="sub">Order: ${order.orderId} | Date: ${order.paidAt || order.submittedAt || ''}</div><div class="info"><p><strong>Patient:</strong> ${order.firstName} ${order.lastName}</p><p><strong>DOB:</strong> ${order.dob}</p><p><strong>Email:</strong> ${order.email}</p><p><strong>Phone:</strong> ${order.phone}</p></div><table><thead><tr><th>Test</th><th style="text-align:right">Amount</th></tr></thead><tbody>${rows}<tr class="tot"><td>Total</td><td style="text-align:right">$${order.total.toFixed(2)}</td></tr></tbody></table><div class="ft">Thank you for your visit.</div><script>window.onload=function(){window.print();}<\/script></body></html>`);
       w.document.close();
     }
 
     function downloadCSV() {
-      const orders = loadOrders();
-      if (orders.length === 0) { alert('No orders to download.'); return; }
+      if (allOrders.length === 0) { alert('No orders to download.'); return; }
 
-      const headers = ['Order ID','First Name','Last Name','DOB','Email','Phone','Gender','Race','Ethnicity','Address','City','State','Zip','Tests','Total','Status','Submitted'];
-      const rows = orders.map(o => [
+      const headers = ['Order ID','First Name','Last Name','DOB','Email','Phone','Gender','Address','City','State','Zip','Tests','Total','Status','Submitted'];
+      const rows = allOrders.map(o => [
         o.orderId, o.firstName, o.lastName, o.dob, o.email, o.phone,
-        o.gender, o.race, o.ethnicity, o.address, o.city, o.state, o.zipcode,
+        o.gender, o.address, o.city, o.state, o.zipcode,
         o.tests.map(t => t.name).join('; '),
         o.total.toFixed(2),
         o.status || 'pending',
