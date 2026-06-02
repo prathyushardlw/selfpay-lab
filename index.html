@@ -213,11 +213,12 @@
   <div class="container hidden" id="invoicePage">
     <div class="invoice-screen">
       <h2 class="invoice-title">Order Summary</h2>
-      <div class="invoice-patient" id="invoicePatient"></div>
+      <div class="invoice-patient order-details" id="invoicePatient"></div>
       <div class="invoice-tests" id="invoiceTests"></div>
       <div class="invoice-total" id="invoiceTotal"></div>
-      <div class="form-actions" style="justify-content:center;margin-top:24px;">
-        <button type="button" class="btn btn-pay btn-full" id="payNowBtn">Pay Now</button>
+      <div class="form-actions" style="margin-top:24px;">
+        <button type="button" class="btn btn-cancel" id="backToFormBtn">&#8592; Back</button>
+        <button type="button" class="btn btn-pay" id="payNowBtn">Pay Now</button>
       </div>
       <p style="text-align:center;color:#888;font-size:12px;margin-top:12px;">You will be redirected to Stripe secure checkout.</p>
     </div>

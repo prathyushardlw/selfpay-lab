@@ -1,23 +1,66 @@
 // Lab tests data
 const labTests = [
-  { name: "Complete Blood Count", price: 5.00, tube: "Lavender" },
-  { name: "Comp. Metabolic Panel(14)", price: 6.00, tube: "Green" },
-  { name: "Lipid Panel", price: 9.00, tube: "Green" },
-  { name: "Vitamin B12", price: 10.00, tube: "Red" },
-  { name: "Vitamin D", price: 10.00, tube: "Red" },
-  { name: "Hgb A1c", price: 10.00, tube: "Lavender" },
-  { name: "Prostate-specific Antigen", price: 20.00, tube: "Red" },
-  { name: "Thyroid-stimulating hormone", price: 10.00, tube: "Red" },
-  { name: "Urinalysis", price: 5.00, tube: "Yellow (Urine Cup)" },
-  { name: "Urine Culture", price: 30.00, tube: "Yellow (Urine Cup)" },
-  { name: "Iron Studies", price: 50.00, tube: "Green" },
-  { name: "Testosterone", price: 20.00, tube: "Red" },
-  { name: "T3+T4+T7+TSH", price: 20.00, tube: "Red" },
-  { name: "BNP", price: 35.00, tube: "Lavender" },
-  { name: "Sed Rate", price: 10.00, tube: "Lavender" },
-  { name: "High Sensitive CRP", price: 20.00, tube: "Red" },
-  { name: "Microalbumin/Creat. Ratio", price: 20.00, tube: "Yellow (Urine Cup)" },
-  { name: "Folic Acid", price: 15.00, tube: "Red" }
+  { name: "Amylase", price: 5.00, tube: "Green" },
+  { name: "Anti-HAV IgM", price: 14.00, tube: "Red" },
+  { name: "Anti-Hbc", price: 14.00, tube: "Red" },
+  { name: "Anti-Hbc IgM", price: 14.00, tube: "Red" },
+  { name: "Anti-HBS", price: 14.00, tube: "Red" },
+  { name: "Anti-HCV", price: 14.00, tube: "Red" },
+  { name: "Anti-Tg", price: 14.00, tube: "Red" },
+  { name: "Anti-TPO", price: 14.00, tube: "Red" },
+  { name: "CBC with Automated Diff", price: 3.00, tube: "Lavender" },
+  { name: "Comprehensive Metabolic Panel (CMP)", price: 3.00, tube: "Green" },
+  { name: "DHEA-S", price: 25.00, tube: "Red" },
+  { name: "Digoxin", price: 15.00, tube: "Red" },
+  { name: "Direct Bilirubin", price: 5.00, tube: "Green" },
+  { name: "Estradiol", price: 25.00, tube: "Red" },
+  { name: "Ferritin", price: 12.00, tube: "Red" },
+  { name: "Folate", price: 12.00, tube: "Red" },
+  { name: "Free PSA", price: 15.00, tube: "Red" },
+  { name: "Free T3", price: 5.00, tube: "Red" },
+  { name: "Free T4", price: 8.00, tube: "Red" },
+  { name: "FSH", price: 15.00, tube: "Red" },
+  { name: "GGT", price: 8.00, tube: "Green" },
+  { name: "HBsAg", price: 10.00, tube: "Red" },
+  { name: "HDL", price: 8.00, tube: "Green" },
+  { name: "Hemoglobin A1c (HgbA1c)", price: 6.00, tube: "Lavender" },
+  { name: "Hepatic Profile (Liver Function)", price: 15.00, tube: "Green" },
+  { name: "Hepatitis Panel", price: 45.00, tube: "Red" },
+  { name: "HIV Screening", price: 15.00, tube: "Red" },
+  { name: "Insulin", price: 10.00, tube: "Red" },
+  { name: "Iron Profile", price: 15.00, tube: "Green" },
+  { name: "Lactate", price: 10.00, tube: "Green" },
+  { name: "LDH", price: 6.00, tube: "Green" },
+  { name: "LDL", price: 12.00, tube: "Green" },
+  { name: "LH", price: 15.00, tube: "Red" },
+  { name: "Lipase", price: 6.00, tube: "Green" },
+  { name: "Lipid Panel", price: 8.00, tube: "Green" },
+  { name: "Lithium", price: 6.00, tube: "Red" },
+  { name: "Magnesium", price: 6.00, tube: "Green" },
+  { name: "Phosphorus", price: 5.00, tube: "Green" },
+  { name: "Prealbumin", price: 13.00, tube: "Red" },
+  { name: "Prolactin", price: 15.00, tube: "Red" },
+  { name: "Renal Panel", price: 8.00, tube: "Green" },
+  { name: "Rheumatoid Factor", price: 7.00, tube: "Red" },
+  { name: "Rubella IgG", price: 12.00, tube: "Red" },
+  { name: "Rubella IgM", price: 12.00, tube: "Red" },
+  { name: "SHBG", price: 20.00, tube: "Red" },
+  { name: "Syphilis", price: 15.00, tube: "Red" },
+  { name: "Testosterone", price: 15.00, tube: "Red" },
+  { name: "Total Bilirubin", price: 5.00, tube: "Green" },
+  { name: "Total PSA", price: 15.00, tube: "Red" },
+  { name: "Total T3", price: 15.00, tube: "Red" },
+  { name: "Total T4", price: 7.00, tube: "Red" },
+  { name: "Transferrin", price: 12.00, tube: "Red" },
+  { name: "TSH", price: 10.00, tube: "Red" },
+  { name: "T-Uptake", price: 8.00, tube: "Red" },
+  { name: "Uric Acid", price: 8.00, tube: "Green" },
+  { name: "Urine Microalbumin", price: 8.00, tube: "Yellow (Urine Cup)" },
+  { name: "Urine Analysis", price: 6.00, tube: "Yellow (Urine Cup)" },
+  { name: "Valproic Acid", price: 18.00, tube: "Red" },
+  { name: "Vancomycin", price: 15.00, tube: "Red" },
+  { name: "Vitamin B12", price: 15.00, tube: "Red" },
+  { name: "Vitamin D", price: 25.00, tube: "Red" }
 ];
 
 // Tube color hex map
@@ -387,6 +430,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Pay Now button on invoice page
   document.getElementById('payNowBtn').addEventListener('click', redirectToStripe);
+
+  // Back button on invoice page
+  document.getElementById('backToFormBtn').addEventListener('click', () => {
+    showPage('registrationPage');
+  });
 
   renderTests();
   setupDOBInput();
