@@ -60,7 +60,18 @@ const labTests = [
   { name: "Valproic Acid", price: 18.00, tube: "Red" },
   { name: "Vancomycin", price: 15.00, tube: "Red" },
   { name: "Vitamin B12", price: 15.00, tube: "Red" },
-  { name: "Vitamin D", price: 25.00, tube: "Red" }
+  { name: "Vitamin D", price: 25.00, tube: "Red" },
+  // PCR Panel
+  { name: "Respiratory Panel", price: 169.00, tube: "Swab" },
+  { name: "Allergy Panel - Inhalent 36 Allergens", price: 125.00, tube: "Red" },
+  { name: "Allergy Panel - Food 30 Allergens", price: 125.00, tube: "Red" },
+  { name: "STI Panel", price: 125.00, tube: "Swab" },
+  { name: "UTI Panel", price: 149.00, tube: "Yellow (Urine Cup)" },
+  { name: "Women's Health Panel", price: 179.00, tube: "Swab" },
+  // Toxicology
+  { name: "Confirmation", price: 60.00, tube: "Yellow (Urine Cup)" },
+  { name: "Screening", price: 30.00, tube: "Yellow (Urine Cup)" },
+  { name: "Screening + Confirmation", price: 80.00, tube: "Yellow (Urine Cup)" }
 ];
 
 // Tube color hex map
@@ -68,7 +79,8 @@ const tubeColors = {
   "Lavender": "#9b59b6",
   "Green": "#27ae60",
   "Red": "#e74c3c",
-  "Yellow (Urine Cup)": "#f1c40f"
+  "Yellow (Urine Cup)": "#f1c40f",
+  "Swab": "#3498db"
 };
 
 // State
@@ -85,12 +97,19 @@ function showPage(pageId) {
 // Render test list
 function renderTests() {
   const container = document.getElementById('testList');
-  container.innerHTML = labTests.map((test, index) => `
-    <div class="test-item" data-index="${index}" role="checkbox" aria-checked="false" tabindex="0">
+  const routineEnd = labTests.findIndex(t => t.name === "Respiratory Panel");
+  const pcrEnd = labTests.findIndex(t => t.name === "Confirmation");
+
+  let html = '<div class="test-category">Routine Tests</div>';
+  labTests.forEach((test, index) => {
+    if (index === routineEnd) html += '<div class="test-category">PCR Panel</div>';
+    if (index === pcrEnd) html += '<div class="test-category">Toxicology</div>';
+    html += `<div class="test-item" data-index="${index}" role="checkbox" aria-checked="false" tabindex="0">
       <span class="test-item-name">${test.name} ($${test.price.toFixed(2)})</span>
       <span class="checkbox-circle"></span>
-    </div>
-  `).join('');
+    </div>`;
+  });
+  container.innerHTML = html;
 
   container.addEventListener('click', (e) => {
     const item = e.target.closest('.test-item');

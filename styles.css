@@ -25,6 +25,12 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 12px;
+}
+
+.brand-logo {
+  height: 40px;
+  width: auto;
 }
 
 .brand-title {
@@ -67,6 +73,20 @@ body {
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+.test-category {
+  font-size: 13px;
+  font-weight: 700;
+  color: #064e3b;
+  background: #d1fae5;
+  padding: 8px 16px;
+  border-radius: 6px;
+  margin-top: 12px;
+}
+
+.test-category:first-child {
+  margin-top: 0;
 }
 
 .test-item {
