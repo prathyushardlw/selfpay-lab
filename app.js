@@ -1,5 +1,5 @@
 // Lab tests data
-const labTests = [
+let labTests = [
   { name: "Amylase", price: 5.00, tube: "Green" },
   { name: "Anti-HAV IgM", price: 14.00, tube: "Red" },
   { name: "Anti-Hbc", price: 14.00, tube: "Red" },
@@ -86,6 +86,22 @@ const tubeColors = {
 // State
 const selectedTests = new Set();
 let orderData = null;
+const CURRENT_ORDER_STORAGE_KEY = 'testgo_current_order';
+
+async function loadLabTests() {
+  const response = await fetch('/.netlify/functions/get-test-catalog');
+  const payload = await response.json();
+
+  if (!response.ok) {
+    throw new Error(payload.error || 'Unable to load test catalog.');
+  }
+
+  if (!Array.isArray(payload) || payload.length === 0) {
+    throw new Error('No tests are available right now.');
+  }
+
+  labTests = payload;
+}
 
 // Page navigation
 function showPage(pageId) {
@@ -97,19 +113,18 @@ function showPage(pageId) {
 // Render test list
 function renderTests() {
   const container = document.getElementById('testList');
-  const routineEnd = labTests.findIndex(t => t.name === "Respiratory Panel");
-  const pcrEnd = labTests.findIndex(t => t.name === "Confirmation");
 
-  let html = '<div class="test-category">Routine Tests</div>';
-  labTests.forEach((test, index) => {
-    if (index === routineEnd) html += '<div class="test-category">PCR Panel</div>';
-    if (index === pcrEnd) html += '<div class="test-category">Toxicology</div>';
-    html += `<div class="test-item" data-index="${index}" role="checkbox" aria-checked="false" tabindex="0">
+  if (!Array.isArray(labTests) || labTests.length === 0) {
+    container.innerHTML = '<p style="padding:12px;color:#b91c1c;">No tests are available right now.</p>';
+    return;
+  }
+
+  container.innerHTML = labTests.map((test, index) => `
+    <div class="test-item" data-index="${index}" role="checkbox" aria-checked="false" tabindex="0">
       <span class="test-item-name">${test.name} ($${test.price.toFixed(2)})</span>
       <span class="checkbox-circle"></span>
-    </div>`;
-  });
-  container.innerHTML = html;
+    </div>
+  `).join('');
 
   container.addEventListener('click', (e) => {
     const item = e.target.closest('.test-item');
@@ -314,6 +329,21 @@ function generateOrderId() {
   return 'TG-' + ts + rand;
 }
 
+function buildClientOrderSnapshot(order) {
+  return {
+    orderId: order.orderId,
+    firstName: order.firstName,
+    lastName: order.lastName,
+    dob: order.dob,
+    email: order.email,
+    phone: order.phone,
+    tests: order.tests,
+    total: order.total,
+    submittedAt: order.submittedAt,
+    status: order.status || 'pending'
+  };
+}
+
 // Show invoice/order summary page
 function showInvoicePage() {
   // Patient info
@@ -336,17 +366,7 @@ function showInvoicePage() {
   // Total
   document.getElementById('invoiceTotal').innerHTML = `<div class="summary-total"><span>Total</span><span>$${orderData.total.toFixed(2)}</span></div>`;
 
-  // Save order to localStorage (backup)
-  const orders = JSON.parse(localStorage.getItem('testgo_orders') || '[]');
-  orders.push(orderData);
-  localStorage.setItem('testgo_orders', JSON.stringify(orders));
-
-  // Save order to server
-  fetch('/.netlify/functions/save-order', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(orderData)
-  }).catch(() => {});
+  sessionStorage.setItem(CURRENT_ORDER_STORAGE_KEY, JSON.stringify(buildClientOrderSnapshot(orderData)));
 
   showPage('invoicePage');
 }
@@ -359,8 +379,7 @@ function redirectToStripe() {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      tests: orderData.tests,
-      total: orderData.total,
+      testNames: orderData.tests.map((test) => test.name),
       orderId: orderData.orderId,
       email: orderData.email
     })
@@ -441,7 +460,7 @@ function setupForm() {
 }
 
 // Initialize
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   // Welcome page - Get Started
   document.getElementById('getStartedBtn').addEventListener('click', () => {
     showPage('registrationPage');
@@ -455,8 +474,17 @@ document.addEventListener('DOMContentLoaded', () => {
     showPage('registrationPage');
   });
 
-  renderTests();
   setupDOBInput();
   setupSignaturePad();
   setupForm();
+
+  const testList = document.getElementById('testList');
+  testList.innerHTML = '<p style="padding:12px;color:#666;">Loading available tests...</p>';
+
+  try {
+    await loadLabTests();
+    renderTests();
+  } catch (error) {
+    testList.innerHTML = `<p style="padding:12px;color:#b91c1c;">${error.message}</p>`;
+  }
 });

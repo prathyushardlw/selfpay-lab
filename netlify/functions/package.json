@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "TestGO Self Pay Registration",
   "dependencies": {
+    "@netlify/blobs": "^8.2.0",
     "stripe": "^14.0.0"
   }
 }
