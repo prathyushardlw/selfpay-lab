@@ -69,8 +69,30 @@ const DEFAULT_TEST_CATALOG = [
 const TEST_CATALOG_KEY = 'catalog';
 const LOCAL_CATALOG_FILE = path.join(process.cwd(), '.netlify', 'local-test-catalog.json');
 
+function getManualBlobsOptions() {
+  const siteID =
+    process.env.NETLIFY_BLOBS_SITE_ID ||
+    process.env.NETLIFY_SITE_ID ||
+    process.env.SITE_ID ||
+    process.env.NETLIFY_SITEID;
+  const token =
+    process.env.NETLIFY_BLOBS_TOKEN ||
+    process.env.NETLIFY_AUTH_TOKEN ||
+    process.env.NETLIFY_PERSONAL_ACCESS_TOKEN;
+
+  if (!siteID || !token) {
+    return null;
+  }
+
+  return { siteID, token };
+}
+
 function getTestCatalogStore() {
-  return getStore({ name: 'selfpay-test-catalog', consistency: 'strong' });
+  return getStore({
+    name: 'selfpay-test-catalog',
+    consistency: 'strong',
+    ...(getManualBlobsOptions() || {})
+  });
 }
 
 function isBlobsUnavailableError(error) {
@@ -174,6 +196,12 @@ async function loadTestCatalog() {
     return sanitizeCatalog(storedCatalog);
   } catch (error) {
     if (!isLocalDevelopment() || !isBlobsUnavailableError(error)) {
+      if (isBlobsUnavailableError(error)) {
+        throw new Error(
+          'Netlify Blobs is unavailable. Either run inside a Netlify environment with Blobs enabled, or set NETLIFY_BLOBS_SITE_ID and NETLIFY_BLOBS_TOKEN in the environment.'
+        );
+      }
+
       throw error;
     }
 
@@ -199,6 +227,12 @@ async function saveTestCatalog(tests) {
     });
   } catch (error) {
     if (!isLocalDevelopment() || !isBlobsUnavailableError(error)) {
+      if (isBlobsUnavailableError(error)) {
+        throw new Error(
+          'Netlify Blobs is unavailable. Either run inside a Netlify environment with Blobs enabled, or set NETLIFY_BLOBS_SITE_ID and NETLIFY_BLOBS_TOKEN in the environment.'
+        );
+      }
+
       throw error;
     }
 
