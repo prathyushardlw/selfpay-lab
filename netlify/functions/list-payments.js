@@ -9,15 +9,17 @@ exports.handler = async (event) => {
   try {
     assertAdminAccess(event);
 
+    // Try checkout sessions first
     const sessions = await stripe.checkout.sessions.list({
       limit: 50,
       expand: ['data.payment_intent']
     });
 
-    const payments = sessions.data
-      .filter((session) => session.mode === 'payment' && session.metadata?.orderId)
+    const sessionPayments = sessions.data
+      .filter((session) => session.mode === 'payment')
       .map((session) => ({
-        orderId: session.metadata.orderId,
+        orderId: session.metadata?.orderId || 'N/A',
+        customerName: session.customer_details?.name || null,
         sessionId: session.id,
         paymentIntentId:
           typeof session.payment_intent === 'string'
@@ -34,7 +36,7 @@ exports.handler = async (event) => {
     return {
       statusCode: 200,
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payments)
+      body: JSON.stringify(sessionPayments)
     };
   } catch (error) {
     return {

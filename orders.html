@@ -352,7 +352,7 @@
           return `
             <div class="order-card">
               <div class="order-card-header">
-                <span class="order-id">${order.orderId}</span>
+                <span class="order-id">${order.customerName || order.customerEmail || order.orderId}</span>
                 <span class="order-status ${status.className}">${status.label}</span>
               </div>
               <div class="order-info">
@@ -374,9 +374,10 @@
     function downloadCSV() {
       if (allOrders.length === 0) { alert('No orders to download.'); return; }
 
-      const headers = ['Order ID','Customer Email','Amount','Currency','Checkout Status','Payment Status','Stripe Session','Transaction ID','Created'];
+      const headers = ['Order ID','Customer Name','Customer Email','Amount','Currency','Checkout Status','Payment Status','Stripe Session','Transaction ID','Created'];
       const rows = allOrders.map(o => [
         o.orderId,
+        o.customerName || '',
         o.customerEmail || '',
         typeof o.amountTotal === 'number' ? (o.amountTotal / 100).toFixed(2) : '',
         (o.currency || 'usd').toUpperCase(),

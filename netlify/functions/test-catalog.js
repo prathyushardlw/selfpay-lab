@@ -96,11 +96,22 @@ function getTestCatalogStore() {
 }
 
 function isBlobsUnavailableError(error) {
-  return error?.message?.includes('has not been configured to use Netlify Blobs');
+  return (
+    error?.message?.includes('has not been configured to use Netlify Blobs') ||
+    error?.statusCode === 400 ||
+    error?.status === 400 ||
+    error?.message?.includes('400') ||
+    error?.message?.includes('Failed to get blob') ||
+    error?.message?.includes('ECONNREFUSED')
+  );
 }
 
 function isLocalDevelopment() {
-  return process.env.NETLIFY_DEV === 'true' || process.env.URL === 'http://localhost:8888';
+  return (
+    process.env.NETLIFY_DEV === 'true' ||
+    process.env.URL === 'http://localhost:8888' ||
+    !process.env.NETLIFY
+  );
 }
 
 async function readLocalCatalog() {

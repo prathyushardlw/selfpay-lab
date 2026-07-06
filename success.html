@@ -27,6 +27,9 @@
         <button type="button" class="btn btn-pay btn-full" id="printLabelBtn">&#128424; Print Label</button>
         <button type="button" class="btn btn-cancel btn-full" id="printInvoiceBtn">&#128424; Print Invoice</button>
       </div>
+      <div style="text-align:center;margin-top:16px;">
+        <a href="/index.html" class="btn btn-pay" style="display:inline-block;text-decoration:none;">Place New Order</a>
+      </div>
     </div>
   </div>
 
@@ -203,10 +206,40 @@
       const printLabelBtn = document.getElementById('printLabelBtn');
       const printInvoiceBtn = document.getElementById('printInvoiceBtn');
       let order = loadStoredOrder();
+      const paymentType = getQueryParam('payment_type');
 
       printLabelBtn.disabled = true;
       printInvoiceBtn.disabled = true;
 
+      // Pay Later flow - no Stripe verification needed
+      if (paymentType === 'pay-later') {
+        document.getElementById('confirmIcon').innerHTML = '&#10004;';
+        document.getElementById('confirmTitle').textContent = 'Order Submitted';
+        const statusMessage = document.getElementById('statusMessage');
+        statusMessage.textContent = 'Your order has been received. You can pay later during your visit. A confirmation email has been sent.';
+        statusMessage.style.color = '#065f46';
+
+        if (order) {
+          const details = document.getElementById('orderDetails');
+          let html = '';
+          html += `<div class="detail-row"><span class="detail-label">Order ID</span><span class="detail-value">${order.orderId}</span></div>`;
+          html += `<div class="detail-row"><span class="detail-label">Patient</span><span class="detail-value">${order.firstName} ${order.lastName}</span></div>`;
+          html += `<div class="detail-row"><span class="detail-label">Email</span><span class="detail-value">${order.email}</span></div>`;
+          html += `<div class="detail-row"><span class="detail-label">Tests</span><span class="detail-value">${order.tests.map(t => t.name).join(', ')}</span></div>`;
+          html += `<div class="detail-row"><span class="detail-label">Amount</span><span class="detail-value" style="color:#d97706;font-weight:700;">$${order.total.toFixed(2)}</span></div>`;
+          html += `<div class="detail-row"><span class="detail-label">Status</span><span class="detail-value" style="color:#d97706;font-weight:700;">PAY LATER</span></div>`;
+          details.innerHTML = html;
+          renderOrderTubes(order);
+
+          printLabelBtn.disabled = false;
+          printInvoiceBtn.disabled = false;
+          printLabelBtn.addEventListener('click', () => printLabel(order));
+          printInvoiceBtn.addEventListener('click', () => printInvoice(order));
+        }
+        return;
+      }
+
+      // Pay Now flow - verify with Stripe
       try {
         const verification = await fetchVerification();
         setVerificationState(verification);

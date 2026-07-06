@@ -40,7 +40,8 @@ exports.handler = async (event) => {
       customer_email: email,
       metadata: {
         orderId,
-        expectedAmount: String(Math.round(total * 100))
+        expectedAmount: String(Math.round(total * 100)),
+        source: 'selfpay-lab'
       },
       success_url: `${siteUrl}/success.html?order_id=${encodeURIComponent(orderId)}&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${siteUrl}/index.html`

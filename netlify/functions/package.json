@@ -4,6 +4,7 @@
   "description": "TestGO Self Pay Registration",
   "dependencies": {
     "@netlify/blobs": "^8.2.0",
+    "@sendgrid/mail": "^8.1.6",
     "stripe": "^14.0.0"
   }
 }

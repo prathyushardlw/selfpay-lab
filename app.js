@@ -375,6 +375,9 @@ function showInvoicePage() {
 function redirectToStripe() {
   showPage('paymentPage');
 
+  // Send email for Pay Now (non-blocking, will also send after Stripe success)
+  sendOrderEmail('pay-now');
+
   fetch('/.netlify/functions/create-checkout', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -396,6 +399,45 @@ function redirectToStripe() {
   .catch(err => {
     alert('Could not connect to payment service. Please try again.');
     showPage('invoicePage');
+  });
+}
+
+// Pay Later flow
+function handlePayLater() {
+  showPage('paymentPage');
+  document.querySelector('#paymentPage .payment-title').textContent = 'Processing your order...';
+
+  sendOrderEmail('pay-later')
+    .then(() => {
+      window.location.href = `/success.html?order_id=${encodeURIComponent(orderData.orderId)}&payment_type=pay-later`;
+    })
+    .catch(() => {
+      alert('Could not send confirmation email. Please try again.');
+      showPage('invoicePage');
+    });
+}
+
+// Send order email
+function sendOrderEmail(paymentType) {
+  return fetch('/.netlify/functions/send-order-email', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      firstName: orderData.firstName,
+      lastName: orderData.lastName,
+      email: orderData.email,
+      phone: orderData.phone,
+      dob: orderData.dob,
+      tests: orderData.tests,
+      total: orderData.total,
+      orderId: orderData.orderId,
+      paymentType: paymentType,
+      submittedAt: orderData.submittedAt
+    })
+  })
+  .then(res => {
+    if (!res.ok) throw new Error('Email failed');
+    return res.json();
   });
 }
 
@@ -468,6 +510,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Pay Now button on invoice page
   document.getElementById('payNowBtn').addEventListener('click', redirectToStripe);
+
+  // Pay Later button on invoice page
+  document.getElementById('payLaterBtn').addEventListener('click', handlePayLater);
 
   // Back button on invoice page
   document.getElementById('backToFormBtn').addEventListener('click', () => {
