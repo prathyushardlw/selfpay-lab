@@ -8,15 +8,14 @@ function getConfig() {
   };
 }
 
-async function sendEmail(to, subject, html) {
+async function sendEmail(to, subject, html, cc) {
   const { apiKey, apiUrl, fromEmail } = getConfig();
 
-  if (!apiKey || !fromEmail) {
-    console.log(`[Email skipped] No API key or from email. Would send to: ${to}, subject: ${subject}`);
-    return;
+  if (!apiKey) {
+    throw new Error('KAKA_EMAIL_SERVICE_KEY is not configured. Set it in Netlify environment variables.');
   }
 
-  console.log('Sending email to:', to, 'API URL:', `${apiUrl}/notifications/sendEmail`, 'Key starts with:', apiKey?.substring(0, 12));
+  console.log('Sending email to:', to, cc ? `cc: ${cc}` : '', 'API URL:', `${apiUrl}/notifications/sendEmail`, 'Key starts with:', apiKey?.substring(0, 12));
   const payload = JSON.stringify({
       message: {
         body: {
@@ -31,6 +30,7 @@ async function sendEmail(to, subject, html) {
         }
       },
       toAddresses: Array.isArray(to) ? to : [to],
+      ...(cc ? { ccAddresses: Array.isArray(cc) ? cc : [cc] } : {}),
       fromEmail: fromEmail
     });
   console.log('Request payload length:', payload.length);
@@ -44,12 +44,18 @@ async function sendEmail(to, subject, html) {
     body: payload
   });
 
+  const responseText = await response.text();
+  console.log(`Kaka API response: status=${response.status}, body=${responseText.substring(0, 200)}`);
+
   if (!response.ok) {
-    const errorBody = await response.text();
-    throw new Error(`Kaka email API error (${response.status}): ${errorBody}`);
+    throw new Error(`Kaka email API error (${response.status}): ${responseText}`);
   }
 
-  return response.json();
+  try {
+    return JSON.parse(responseText);
+  } catch {
+    return { ok: true };
+  }
 }
 
 function buildOrderEmailHtml({ firstName, lastName, email, phone, dob, tests, total, orderId, paymentType, submittedAt }) {
@@ -109,13 +115,9 @@ exports.handler = async (event) => {
 
     const html = buildOrderEmailHtml(body);
     const subjectPrefix = paymentType === 'pay-now' ? 'Payment Confirmed' : 'Order Received (Pay Later)';
-    const subject = `${subjectPrefix} - Order ${orderId}`;
-    const labSubject = `[Lab Copy] ${subject} - ${firstName} ${lastName}`;
+    const subject = `${subjectPrefix} - Order ${orderId} - ${firstName} ${lastName}`;
 
-    await Promise.all([
-      sendEmail(email, subject, html),
-      sendEmail(LAB_EMAIL, labSubject, html)
-    ]);
+    await sendEmail(email, subject, html, LAB_EMAIL);
 
     return {
       statusCode: 200,

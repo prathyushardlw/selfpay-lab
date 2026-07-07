@@ -375,9 +375,6 @@ function showInvoicePage() {
 function redirectToStripe() {
   showPage('paymentPage');
 
-  // Send email for Pay Now (non-blocking, will also send after Stripe success)
-  sendOrderEmail('pay-now');
-
   fetch('/.netlify/functions/create-checkout', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

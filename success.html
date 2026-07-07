@@ -252,6 +252,28 @@
           printInvoiceBtn.disabled = false;
           printLabelBtn.addEventListener('click', () => printLabel(order));
           printInvoiceBtn.addEventListener('click', () => printInvoice(order));
+
+          // Send confirmation email once (guard against duplicate sends on refresh)
+          const emailSentKey = `testgo_email_sent_${verification.orderId}`;
+          if (!sessionStorage.getItem(emailSentKey)) {
+            sessionStorage.setItem(emailSentKey, '1');
+            fetch('/.netlify/functions/send-order-email', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                firstName: order.firstName,
+                lastName: order.lastName,
+                email: order.email,
+                phone: order.phone,
+                dob: order.dob,
+                tests: order.tests,
+                total: order.total,
+                orderId: order.orderId,
+                paymentType: 'pay-now',
+                submittedAt: order.submittedAt
+              })
+            }).catch(() => { /* non-blocking — email failure should not break the success page */ });
+          }
         }
       } catch (error) {
         document.getElementById('confirmIcon').innerHTML = '&#9888;';
