@@ -1,3 +1,5 @@
+const { getStore } = require('@netlify/blobs');
+
 const ATLANTA_EMAIL = 'AtlantaGA@TestGO.com';
 const SUBHASH_EMAIL = 'Subhash@TestGO.com';
 
@@ -59,7 +61,7 @@ async function sendEmail(to, subject, html, { cc, bcc } = {}) {
   }
 }
 
-function buildOrderEmailHtml({ firstName, lastName, email, phone, dob, tests, total, orderId, paymentType, submittedAt, signature }) {
+function buildOrderEmailHtml({ firstName, lastName, email, phone, dob, tests, total, orderId, paymentType, submittedAt, signatureUrl }) {
   const testRows = tests.map(t => `<tr><td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;">${t.name}</td><td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;text-align:right;">$${Number(t.price).toFixed(2)}</td></tr>`).join('');
 
   const statusLabel = paymentType === 'pay-now' ? 'Paid Online (Stripe)' : 'Pay Later (Pending)';
@@ -94,7 +96,7 @@ function buildOrderEmailHtml({ firstName, lastName, email, phone, dob, tests, to
         ${paymentType === 'pay-later' ? '<p style="margin-top:20px;padding:12px;background:#fef3c7;border-radius:8px;font-size:13px;color:#92400e;">Payment will be collected during the visit.</p>' : ''}
 
         <h2 style="font-size:16px;color:#064e3b;margin:20px 0 10px;">Participant Acknowledgment</h2>
-        ${signature ? `<div style="border:1px solid #e2e8f0;border-radius:8px;padding:12px;background:#f8fafc;text-align:center;"><img src="${signature}" alt="Participant Signature" style="max-width:300px;height:auto;display:inline-block;" /></div>` : '<p style="font-size:13px;color:#666;">Signature not available</p>'}
+        ${signatureUrl ? `<div style="border:1px solid #e2e8f0;border-radius:8px;padding:12px;background:#f8fafc;text-align:center;"><img src="${signatureUrl}" alt="Participant Signature" style="max-width:300px;height:auto;display:inline-block;" /></div>` : '<p style="font-size:13px;color:#666;">Signature not available</p>'}
         <p style="font-size:12px;color:#666;margin-top:6px;text-align:center;">Signed on ${submittedAt}</p>
 
         <p style="margin-top:20px;padding:12px;background:#eff6ff;border-radius:8px;font-size:13px;color:#1d4ed8;text-align:center;">&#128424; Please print this email and bring it with you to pay at the fair.</p>
@@ -110,7 +112,7 @@ exports.handler = async (event) => {
 
   try {
     const body = JSON.parse(event.body || '{}');
-    const { firstName, lastName, email, phone, dob, tests, total, orderId, paymentType, submittedAt } = body;
+    const { firstName, lastName, email, phone, dob, tests, total, orderId, paymentType, submittedAt, signature } = body;
 
     if (!email || !orderId || !tests || !tests.length) {
       return {
@@ -120,7 +122,23 @@ exports.handler = async (event) => {
       };
     }
 
-    const html = buildOrderEmailHtml(body);
+    // Store signature in Netlify Blobs and get a hosted URL
+    let signatureUrl = '';
+    if (signature) {
+      try {
+        const base64Data = signature.replace(/^data:image\/\w+;base64,/, '');
+        const store = getStore('signatures');
+        await store.set(orderId, base64Data);
+        const siteUrl = process.env.URL || 'https://selfpayportal.netlify.app';
+        signatureUrl = `${siteUrl}/.netlify/functions/get-signature?id=${encodeURIComponent(orderId)}`;
+        console.log('Signature stored, URL:', signatureUrl);
+      } catch (sigErr) {
+        console.error('Failed to store signature, falling back to inline:', sigErr.message);
+        signatureUrl = signature; // fallback to data URI
+      }
+    }
+
+    const html = buildOrderEmailHtml({ ...body, signatureUrl });
     const subjectPrefix = paymentType === 'pay-now' ? 'Payment Confirmed' : 'Order Received (Pay Later)';
     const subject = `${subjectPrefix} - Order ${orderId} - ${firstName} ${lastName}`;
 
