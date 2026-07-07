@@ -178,13 +178,27 @@
 
       <!-- Disclaimer -->
       <section class="section">
-        <h3 class="disclaimer-title">DISCLAIMER:</h3>
+        <h3 class="disclaimer-title">TestGO Health Fair Participation Agreement &amp; Liability Waiver</h3>
+        <p style="font-weight:600;color:#b91c1c;margin-bottom:12px;">Please Read Carefully Before Signing:</p>
         <div class="disclaimer-text">
-          <p>In consideration for receiving the opportunity to participate in Lab testing (hereinafter "Testing"), which is provided by the Company, I hereby release, waive, discharge, covenant not to sue, and agree to hold harmless for any and all purposes the Company and their healthcare staff, members, shareholders, officers, servants, agents, volunteers, or employees (herein referred to as "indemnities") from any and all liabilities, claims, demands, injuries (including death), or damages, including court costs and attorney's fees and expenses, that may be sustained by me while participating in Testing, while traveling to and from the Testing, or while on the premises owned or leased by Indemnities.</p>
-          <p>I am also fully aware that the Company is not providing medical care or giving a medical diagnosis with Testing and that I should consult my doctor or go to an emergency room if I have a serious symptom and/or to obtain medical advice from my own doctor as to the results of the Testing.</p>
-          <p>I hereby waive my rights regarding protected health information under HIPAA, to the extent necessary to complete the Testing and to allow the Company to provide the results of Testing to (1) the organization which has arranged for the testing, and (2) local and state public health authorities (which may result in further direct communication from those entities to me for further follow-up and contact tracing). Protected health information will not be reused or disclosed by the Company to any person or entity other than above, except as required by law.</p>
-          <p>By Signing, I am agreeing to voluntarily testing. In signing this agreement, I acknowledge and represent that I have read it, understand, and sign it voluntarily.</p>
+          <p><strong>Voluntary Lab Screening:</strong> You are choosing to receive these heavily discounted laboratory tests voluntarily for your own informational purposes.</p>
+          <p><strong>Lab Testing Only:</strong> TestGO provides lab testing services only. We do not provide clinical medical care, diagnoses, or treatments.</p>
+          <p><strong>Result Sharing:</strong> By signing, you authorize TestGO to send your results directly to you, the event organizers, and your designated or consulting primary care physician/clinic.</p>
+          <p><strong>1. Voluntary Testing &amp; Patient Request:</strong> I understand that participating in this laboratory testing ("Testing") is entirely voluntary and is being performed solely at my request. I acknowledge that these heavily discounted screening tests are for informational and educational purposes only and do not constitute a comprehensive medical exam or a substitute for regular, professional healthcare.</p>
+          <p><strong>2. Interaction with Volunteer Healthcare Professionals:</strong> During the health fair, I may discuss test recommendations or my requested test menu with onsite volunteer healthcare providers. I explicitly agree that these brief interactions do not establish a formal doctor-patient relationship with the volunteers or TestGO. If an onsite provider suggests specific laboratory tests, I agree that it remains my sole responsibility to seek a formal opinion, diagnosis, and follow-up care from my own primary care physician regarding the final results.</p>
+          <p><strong>3. No Medical Advice or Clinical Diagnosis:</strong> I agree that neither TestGO nor the onsite volunteer physicians are providing medical advice, clinical diagnoses, or health assessments based on the Testing. I understand that I should not rely on these raw screening results to self-diagnose or treat any health condition. If I am experiencing serious or urgent symptoms, I agree to seek immediate emergency medical care.</p>
+          <p><strong>4. Indemnification &amp; Release of Liability:</strong> In consideration for receiving the opportunity to participate in this Testing, I hereby release, waive, discharge, and covenant not to sue TestGO, the event organizers, the onsite volunteer physicians, and their respective staff, members, owners, officers, agents, volunteers, and employees ("Indemnitees") from any and all liabilities, claims, demands, injuries (including death), or damages—including court costs and attorney's fees—arising out of or related to my participation in Testing, the selection of tests, travel to and from the Testing location, or presence on the premises, to the fullest extent permitted by federal, state, and local regulations.</p>
+          <p><strong>5. HIPAA Release &amp; Information Disclosure:</strong> I hereby waive my rights regarding protected health information (PHI) under HIPAA to the extent necessary to complete the Testing. I authorize TestGO to deliver the results of this Testing to:</p>
+          <ul style="margin:8px 0 8px 20px;font-size:13px;">
+            <li>Myself,</li>
+            <li>The organization arranging this health fair event,</li>
+            <li>My primary care physician, clinic, or the healthcare provider I consulted with at this event, and</li>
+            <li>Local and state public health authorities if required by law.</li>
+          </ul>
+          <p>TestGO will not reuse or disclose my PHI to any other person or entity except as legally required.</p>
+          <p><strong>By signing below, I acknowledge and represent that I have read this agreement, fully understand it, and sign it voluntarily.</strong></p>
         </div>
+        <p style="margin-top:14px;font-size:13px;color:#064e3b;">If you have any questions, please reach out to <a href="mailto:AtlantaGA@TestGO.com" style="color:#059669;font-weight:600;">AtlantaGA@TestGO.com</a></p>
       </section>
 
       <!-- Signature -->
@@ -203,7 +217,7 @@
       <section class="section">
         <p class="total-amount">Total Amount To Charge: <span id="totalAmount">$ 0.00</span></p>
         <div class="form-actions">
-          <button type="submit" class="btn btn-pay">Pay</button>
+          <button type="submit" class="btn btn-pay">Next</button>
           <button type="button" class="btn btn-cancel" id="cancelBtn">Cancel</button>
         </div>
       </section>
@@ -217,10 +231,10 @@
       <div class="invoice-patient order-details" id="invoicePatient"></div>
       <div class="invoice-tests" id="invoiceTests"></div>
       <div class="invoice-total" id="invoiceTotal"></div>
-      <div class="form-actions" style="margin-top:24px;">
-        <button type="button" class="btn btn-cancel" id="backToFormBtn">&#8592; Back</button>
-        <button type="button" class="btn btn-pay" id="payNowBtn">Pay Now</button>
-        <button type="button" class="btn btn-paylater" id="payLaterBtn">Pay Later</button>
+      <div style="margin-top:24px;display:flex;flex-direction:column;gap:12px;align-items:center;">
+        <button type="button" class="btn btn-pay btn-full" id="payNowBtn">Pay Now</button>
+        <button type="button" class="btn btn-paylater btn-full" id="payLaterBtn">Pay Later</button>
+        <button type="button" class="btn btn-cancel btn-full" id="backToFormBtn">&#8592; Back</button>
       </div>
       <p style="text-align:center;color:#888;font-size:12px;margin-top:12px;">Pay Now: Redirect to Stripe secure checkout. Pay Later: Pay when you visit.</p>
     </div>

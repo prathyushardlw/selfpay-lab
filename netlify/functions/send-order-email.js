@@ -1,4 +1,5 @@
-const LAB_EMAIL = 'subhash@testgo.com';
+const ATLANTA_EMAIL = 'AtlantaGA@TestGO.com';
+const SUBHASH_EMAIL = 'Subhash@TestGO.com';
 
 function getConfig() {
   return {
@@ -8,14 +9,14 @@ function getConfig() {
   };
 }
 
-async function sendEmail(to, subject, html, cc) {
+async function sendEmail(to, subject, html, { cc, bcc } = {}) {
   const { apiKey, apiUrl, fromEmail } = getConfig();
 
   if (!apiKey) {
     throw new Error('KAKA_EMAIL_SERVICE_KEY is not configured. Set it in Netlify environment variables.');
   }
 
-  console.log('Sending email to:', to, cc ? `cc: ${cc}` : '', 'API URL:', `${apiUrl}/notifications/sendEmail`, 'Key starts with:', apiKey?.substring(0, 12));
+  console.log('Sending email to:', to, cc ? `cc: ${cc}` : '', bcc ? `bcc: ${bcc}` : '');
   const payload = JSON.stringify({
       message: {
         body: {
@@ -31,9 +32,9 @@ async function sendEmail(to, subject, html, cc) {
       },
       toAddresses: Array.isArray(to) ? to : [to],
       ...(cc ? { ccAddresses: Array.isArray(cc) ? cc : [cc] } : {}),
+      ...(bcc ? { bccAddresses: Array.isArray(bcc) ? bcc : [bcc] } : {}),
       fromEmail: fromEmail
     });
-  console.log('Request payload length:', payload.length);
 
   const response = await fetch(`${apiUrl}/notifications/sendEmail`, {
     method: 'POST',
@@ -58,7 +59,7 @@ async function sendEmail(to, subject, html, cc) {
   }
 }
 
-function buildOrderEmailHtml({ firstName, lastName, email, phone, dob, tests, total, orderId, paymentType, submittedAt }) {
+function buildOrderEmailHtml({ firstName, lastName, email, phone, dob, tests, total, orderId, paymentType, submittedAt, signature }) {
   const testRows = tests.map(t => `<tr><td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;">${t.name}</td><td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;text-align:right;">$${Number(t.price).toFixed(2)}</td></tr>`).join('');
 
   const statusLabel = paymentType === 'pay-now' ? 'Paid Online (Stripe)' : 'Pay Later (Pending)';
@@ -91,6 +92,12 @@ function buildOrderEmailHtml({ firstName, lastName, email, phone, dob, tests, to
         </table>
 
         ${paymentType === 'pay-later' ? '<p style="margin-top:20px;padding:12px;background:#fef3c7;border-radius:8px;font-size:13px;color:#92400e;">Payment will be collected during the visit.</p>' : ''}
+
+        <h2 style="font-size:16px;color:#064e3b;margin:20px 0 10px;">Participant Acknowledgment</h2>
+        ${signature ? `<div style="border:1px solid #e2e8f0;border-radius:8px;padding:12px;background:#f8fafc;text-align:center;"><img src="${signature}" alt="Participant Signature" style="max-width:300px;height:auto;display:inline-block;" /></div>` : '<p style="font-size:13px;color:#666;">Signature not available</p>'}
+        <p style="font-size:12px;color:#666;margin-top:6px;text-align:center;">Signed on ${submittedAt}</p>
+
+        <p style="margin-top:20px;padding:12px;background:#eff6ff;border-radius:8px;font-size:13px;color:#1d4ed8;text-align:center;">&#128424; Please print this email and bring it with you to pay at the fair.</p>
       </div>
     </div>
   `;
@@ -117,7 +124,23 @@ exports.handler = async (event) => {
     const subjectPrefix = paymentType === 'pay-now' ? 'Payment Confirmed' : 'Order Received (Pay Later)';
     const subject = `${subjectPrefix} - Order ${orderId} - ${firstName} ${lastName}`;
 
-    await sendEmail(email, subject, html, LAB_EMAIL);
+    // Email 1: Patient copy - To: patient, CC: Atlanta, BCC: Subhash
+    const patientEmailPromise = sendEmail(
+      email,
+      `(Patient Copy) ${subject}`,
+      html,
+      { cc: ATLANTA_EMAIL, bcc: SUBHASH_EMAIL }
+    );
+
+    // Email 2: Lab copy - To: Atlanta, CC: Subhash
+    const labEmailPromise = sendEmail(
+      ATLANTA_EMAIL,
+      `(Lab Copy) ${subject}`,
+      html,
+      { cc: SUBHASH_EMAIL }
+    );
+
+    await Promise.all([patientEmailPromise, labEmailPromise]);
 
     return {
       statusCode: 200,
