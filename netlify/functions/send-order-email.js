@@ -99,7 +99,9 @@ function buildOrderEmailHtml({ firstName, lastName, email, phone, dob, tests, to
         ${signatureUrl ? `<div style="border:1px solid #e2e8f0;border-radius:8px;padding:12px;background:#f8fafc;text-align:center;"><img src="${signatureUrl}" alt="Participant Signature" style="max-width:300px;height:auto;display:inline-block;" /></div>` : '<p style="font-size:13px;color:#666;">Signature not available</p>'}
         <p style="font-size:12px;color:#666;margin-top:6px;text-align:center;">Signed on ${submittedAt}</p>
 
-        <p style="margin-top:20px;padding:12px;background:#eff6ff;border-radius:8px;font-size:13px;color:#1d4ed8;text-align:center;">&#128424; Please print this email and bring it with you to pay at the fair.</p>
+        <p style="margin-top:20px;padding:12px;background:#eff6ff;border-radius:8px;font-size:13px;color:#1d4ed8;text-align:center;">&#128424; Please print this email and bring it with you to the fair as your confirmation, whether you paid now or chose to pay later.</p>
+
+        <p style="margin-top:16px;font-size:12px;color:#666;text-align:center;">For any questions or concerns, please email us at <a href="mailto:AtlantaGA@TestGO.com" style="color:#064e3b;">AtlantaGA@TestGO.com</a>.</p>
       </div>
     </div>
   `;
