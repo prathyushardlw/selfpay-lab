@@ -105,7 +105,7 @@ function buildOrderEmailHtml({ firstName, lastName, email, phone, dob, tests, to
   `;
 }
 
-function buildLabEmailHtml({ firstName, lastName, email, phone, dob, gender, address, city, state, zipcode, insurance, race, ethnicity, providerName, providerNPI, providerEmail, providerPhone, tests, total, orderId, paymentType, submittedAt }) {
+function buildLabEmailHtml({ firstName, lastName, email, phone, dob, gender, address, city, state, zipcode, insurance, race, ethnicity, providerName, providerNPI, providerEmail, providerPhone, tests, total, orderId, paymentType, submittedAt, signatureUrl }) {
   const testRows = tests.map(t => `<tr><td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;">${t.name}</td><td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;text-align:right;">$${Number(t.price).toFixed(2)}</td></tr>`).join('');
 
   const statusLabel = paymentType === 'pay-now' ? 'Paid Online (Stripe)' : 'Pay Later (Pending)';
@@ -189,7 +189,6 @@ exports.handler = async (event) => {
       };
     }
 
-<<<<<<< HEAD
     // Store signature in Netlify Blobs and get a hosted URL
     let signatureUrl = '';
     if (signature) {
@@ -207,7 +206,7 @@ exports.handler = async (event) => {
     }
 
     const patientHtml = buildOrderEmailHtml({ ...body, signatureUrl });
-    const labHtml = buildLabEmailHtml(body);
+    const labHtml = buildLabEmailHtml({ ...body, signatureUrl });
     const subjectPrefix = paymentType === 'pay-now' ? 'Payment Confirmed' : 'Order Received (Pay Later)';
     const subject = `${subjectPrefix} - Order ${orderId} - ${firstName} ${lastName}`;
 

@@ -442,8 +442,7 @@ function sendOrderEmail(paymentType) {
       total: orderData.total,
       orderId: orderData.orderId,
       paymentType: paymentType,
-      submittedAt: orderData.submittedAt,
-      signature: orderData.signature
+      submittedAt: orderData.submittedAt
     })
   })
   .then(res => {
