@@ -115,11 +115,10 @@ function isBlobsAuthError(error) {
 }
 
 function isLocalDevelopment() {
-  return (
-    process.env.NETLIFY_DEV === 'true' ||
-    process.env.URL === 'http://localhost:8888' ||
-    !process.env.NETLIFY
-  );
+  // NETLIFY_DEV is the only signal reliably set by `netlify dev`; NETLIFY/URL
+  // are not guaranteed at deployed function runtime, and AWS_LAMBDA_FUNCTION_NAME
+  // being present means we're in a real (read-only) Lambda environment.
+  return process.env.NETLIFY_DEV === 'true' && !process.env.AWS_LAMBDA_FUNCTION_NAME;
 }
 
 async function readLocalCatalog() {
