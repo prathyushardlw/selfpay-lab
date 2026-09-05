@@ -106,6 +106,14 @@ function isBlobsUnavailableError(error) {
   );
 }
 
+function isBlobsAuthError(error) {
+  return (
+    error?.statusCode === 401 ||
+    error?.status === 401 ||
+    error?.message?.includes('401')
+  );
+}
+
 function isLocalDevelopment() {
   return (
     process.env.NETLIFY_DEV === 'true' ||
@@ -206,6 +214,12 @@ async function loadTestCatalog() {
 
     return sanitizeCatalog(storedCatalog);
   } catch (error) {
+    if (isBlobsAuthError(error)) {
+      throw new Error(
+        'Netlify Blobs rejected the request credentials (401). Check that NETLIFY_BLOBS_SITE_ID/NETLIFY_BLOBS_TOKEN (if set) are valid, or remove them so Netlify can inject credentials automatically.'
+      );
+    }
+
     if (!isLocalDevelopment() || !isBlobsUnavailableError(error)) {
       if (isBlobsUnavailableError(error)) {
         throw new Error(
@@ -237,6 +251,12 @@ async function saveTestCatalog(tests) {
       metadata: { updatedAt: new Date().toISOString(), source: 'admin' }
     });
   } catch (error) {
+    if (isBlobsAuthError(error)) {
+      throw new Error(
+        'Netlify Blobs rejected the request credentials (401). Check that NETLIFY_BLOBS_SITE_ID/NETLIFY_BLOBS_TOKEN (if set) are valid, or remove them so Netlify can inject credentials automatically.'
+      );
+    }
+
     if (!isLocalDevelopment() || !isBlobsUnavailableError(error)) {
       if (isBlobsUnavailableError(error)) {
         throw new Error(
