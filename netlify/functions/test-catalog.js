@@ -69,6 +69,19 @@ const DEFAULT_TEST_CATALOG = [
 const TEST_CATALOG_KEY = 'catalog';
 const LOCAL_CATALOG_FILE = path.join(process.cwd(), '.netlify', 'local-test-catalog.json');
 
+function hasMeaningfulBlobCredential(value) {
+  if (typeof value !== 'string') {
+    return false;
+  }
+
+  const trimmed = value.trim();
+  if (!trimmed || trimmed === 'undefined' || trimmed === 'null') {
+    return false;
+  }
+
+  return !/^(optional_|placeholder_|example_|dummy_|changeme|your_)/i.test(trimmed);
+}
+
 function getManualBlobsOptions() {
   const siteID =
     process.env.NETLIFY_BLOBS_SITE_ID ||
@@ -80,7 +93,7 @@ function getManualBlobsOptions() {
     process.env.NETLIFY_AUTH_TOKEN ||
     process.env.NETLIFY_PERSONAL_ACCESS_TOKEN;
 
-  if (!siteID || !token) {
+  if (!siteID || !token || !hasMeaningfulBlobCredential(siteID) || !hasMeaningfulBlobCredential(token)) {
     return null;
   }
 
@@ -115,10 +128,15 @@ function isBlobsAuthError(error) {
 }
 
 function isLocalDevelopment() {
-  // NETLIFY_DEV is the only signal reliably set by `netlify dev`; NETLIFY/URL
-  // are not guaranteed at deployed function runtime, and AWS_LAMBDA_FUNCTION_NAME
-  // being present means we're in a real (read-only) Lambda environment.
-  return process.env.NETLIFY_DEV === 'true' && !process.env.AWS_LAMBDA_FUNCTION_NAME;
+  // NETLIFY_DEV is the strongest local signal. Some local runners can also expose
+  // Lambda-like env vars, so do not rely on AWS_* variables to exclude local mode.
+  const localUrl = (process.env.URL || '').toLowerCase();
+  const isLocalhost =
+    localUrl.includes('localhost') ||
+    localUrl.includes('127.0.0.1') ||
+    localUrl.includes('[::1]');
+
+  return process.env.NETLIFY_DEV === 'true' || process.env.NODE_ENV === 'development' || isLocalhost;
 }
 
 async function readLocalCatalog() {

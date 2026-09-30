@@ -27,6 +27,10 @@
     .empty-state { text-align: center; padding: 60px 20px; color: #888; }
     .order-actions { margin-top: 10px; }
     .order-actions button { font-size: 12px; padding: 4px 12px; margin-right: 6px; }
+    .orders-pagination { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 12px; }
+    .orders-count { font-size: 13px; color: #64748b; }
+    .admin-token-form { display: grid; grid-template-columns: minmax(220px, 1fr) auto; gap: 10px; max-width: 520px; margin: 18px auto 0; }
+    .admin-token-form input { width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 10px; font: inherit; }
     .admin-note { margin-bottom: 16px; color: #555; font-size: 13px; }
     .status-message { margin: 0 0 14px; padding: 10px 12px; border-radius: 10px; font-size: 13px; }
     .status-message.info { background: #eff6ff; color: #1d4ed8; }
@@ -40,7 +44,8 @@
     .catalog-add { margin-top: 14px; padding-top: 14px; border-top: 1px solid #e2e8f0; }
     .catalog-help { font-size: 12px; color: #64748b; margin: 8px 0 0; }
     @media (max-width: 820px) {
-      .orders-header, .section-header { flex-direction: column; align-items: stretch; }
+      .orders-header, .section-header, .orders-pagination { flex-direction: column; align-items: stretch; }
+      .admin-token-form { grid-template-columns: 1fr; }
       .catalog-row { grid-template-columns: 1fr; }
       .catalog-row.catalog-head { display: none; }
     }
@@ -85,13 +90,19 @@
           </div>
         </div>
         <div id="ordersList"></div>
+        <div id="ordersPagination"></div>
       </section>
     </div>
   </div>
 
   <script>
     const ADMIN_TOKEN_STORAGE_KEY = 'selfpay_admin_token';
+    const ORDER_PAGE_LIMIT = 50;
     let allOrders = [];
+    let ordersNextCursor = null;
+    let ordersHasMore = false;
+    let ordersLoading = false;
+    let csvDownloading = false;
     let catalogTests = [];
 
     function escapeHtml(value) {
@@ -144,13 +155,42 @@
         return existing;
       }
 
-      const token = window.prompt('Enter the admin access token configured in ADMIN_ACCESS_TOKEN');
-      if (!token) {
-        return '';
-      }
+      return '';
+    }
 
-      sessionStorage.setItem(ADMIN_TOKEN_STORAGE_KEY, token.trim());
-      return token.trim();
+    function renderAdminTokenForm(message = 'Enter the admin access token configured in ADMIN_ACCESS_TOKEN.') {
+      const container = document.getElementById('ordersList');
+      document.getElementById('ordersPagination').innerHTML = '';
+
+      container.innerHTML = `
+        <div class="empty-state">
+          <p>${escapeHtml(message)}</p>
+          <div class="admin-token-form">
+            <input type="password" id="adminTokenInput" autocomplete="current-password" placeholder="Admin access token">
+            <button class="btn btn-pay" id="saveAdminTokenBtn" type="button">Continue</button>
+          </div>
+        </div>
+      `;
+
+      const tokenInput = document.getElementById('adminTokenInput');
+      const saveButton = document.getElementById('saveAdminTokenBtn');
+      const saveToken = () => {
+        const token = tokenInput.value.trim();
+        if (!token) {
+          return;
+        }
+
+        sessionStorage.setItem(ADMIN_TOKEN_STORAGE_KEY, token);
+        renderOrders();
+      };
+
+      saveButton.addEventListener('click', saveToken);
+      tokenInput.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') {
+          saveToken();
+        }
+      });
+      tokenInput.focus();
     }
 
     function setCatalogMessage(message, type) {
@@ -331,19 +371,83 @@
       setCatalogMessage('Test catalog saved. The registration form will use the updated list.', 'success');
     }
 
-    async function loadOrders() {
-      allOrders = await fetchWithAdmin('/.netlify/functions/list-payments');
+    function normalizeOrdersPage(payload) {
+      return Array.isArray(payload)
+        ? { data: payload, hasMore: false, nextCursor: null }
+        : payload;
+    }
+
+    async function fetchOrdersPage(startingAfter) {
+      const params = new URLSearchParams({ limit: String(ORDER_PAGE_LIMIT) });
+
+      if (startingAfter) {
+        params.set('starting_after', startingAfter);
+      }
+
+      const payload = await fetchWithAdmin(`/.netlify/functions/list-payments?${params.toString()}`);
+      return normalizeOrdersPage(payload);
+    }
+
+    async function loadOrders({ reset = false } = {}) {
+      const page = await fetchOrdersPage(reset ? null : ordersNextCursor);
+
+      if (reset) {
+        allOrders = [];
+      }
+
+      allOrders = allOrders.concat(page.data || []);
+      ordersHasMore = Boolean(page.hasMore);
+      ordersNextCursor = page.nextCursor || null;
+
       return allOrders;
     }
 
-    async function renderOrders() {
+    function renderOrdersPagination() {
+      const pagination = document.getElementById('ordersPagination');
+
+      if (allOrders.length === 0 && !ordersHasMore && !ordersLoading) {
+        pagination.innerHTML = '';
+        return;
+      }
+
+      const buttonLabel = allOrders.length === 0 ? 'Search More' : 'Load More';
+
+      pagination.innerHTML = `
+        <div class="orders-pagination">
+          <span class="orders-count">Showing ${allOrders.length} portal payment${allOrders.length === 1 ? '' : 's'}</span>
+          ${ordersHasMore ? `<button class="btn btn-pay" id="loadMoreOrdersBtn" type="button" ${ordersLoading ? 'disabled' : ''}>${ordersLoading ? 'Loading...' : buttonLabel}</button>` : ''}
+        </div>
+      `;
+
+      const loadMoreButton = document.getElementById('loadMoreOrdersBtn');
+      if (loadMoreButton) {
+        loadMoreButton.addEventListener('click', () => renderOrders({ reset: false }));
+      }
+    }
+
+    async function renderOrders({ reset = true } = {}) {
+      if (ordersLoading) {
+        return;
+      }
+
       const container = document.getElementById('ordersList');
+      ordersLoading = true;
 
       try {
-        const orders = await loadOrders();
+        if (reset) {
+          ordersNextCursor = null;
+          ordersHasMore = false;
+          container.innerHTML = '<div class="empty-state"><p>Loading Stripe checkout sessions...</p></div>';
+          renderOrdersPagination();
+        }
+
+        const orders = await loadOrders({ reset });
 
         if (orders.length === 0) {
-          container.innerHTML = '<div class="empty-state"><p>No Stripe checkout sessions found.</p></div>';
+          container.innerHTML = ordersHasMore
+            ? '<div class="empty-state"><p>No portal payments found in this Stripe batch.</p></div>'
+            : '<div class="empty-state"><p>No Stripe checkout sessions found.</p></div>';
+          renderOrdersPagination();
           return;
         }
 
@@ -366,16 +470,69 @@
             </div>
           `;
         }).join('');
+        renderOrdersPagination();
       } catch (error) {
+        if (error.message === 'Admin token is required.' || error.message === 'Admin token was rejected.') {
+          renderAdminTokenForm(error.message);
+          return;
+        }
+
         container.innerHTML = `<div class="empty-state"><p>${error.message}</p></div>`;
+        renderOrdersPagination();
+      } finally {
+        ordersLoading = false;
+        renderOrdersPagination();
       }
     }
 
-    function downloadCSV() {
-      if (allOrders.length === 0) { alert('No orders to download.'); return; }
+    async function fetchAllOrdersForCsv() {
+      const records = [];
+      let nextCursor = null;
+      let hasMore = true;
+
+      while (hasMore) {
+        const page = await fetchOrdersPage(nextCursor);
+        records.push(...(page.data || []));
+        nextCursor = page.nextCursor || null;
+        hasMore = Boolean(page.hasMore && nextCursor);
+      }
+
+      return records;
+    }
+
+    async function downloadCSV() {
+      if (csvDownloading) {
+        return;
+      }
+
+      const downloadButton = document.getElementById('downloadCsvBtn');
+      const originalLabel = downloadButton.textContent;
+      csvDownloading = true;
+      downloadButton.disabled = true;
+      downloadButton.textContent = 'Preparing CSV...';
+
+      let orders;
+
+      try {
+        orders = await fetchAllOrdersForCsv();
+      } catch (error) {
+        if (error.message === 'Admin token is required.' || error.message === 'Admin token was rejected.') {
+          renderAdminTokenForm(error.message);
+          return;
+        }
+
+        alert(error.message);
+        return;
+      } finally {
+        csvDownloading = false;
+        downloadButton.disabled = false;
+        downloadButton.textContent = originalLabel;
+      }
+
+      if (orders.length === 0) { alert('No orders to download.'); return; }
 
       const headers = ['Order ID','Customer Name','Customer Email','Amount','Currency','Checkout Status','Payment Status','Stripe Session','Transaction ID','Created'];
-      const rows = allOrders.map(o => [
+      const rows = orders.map(o => [
         o.orderId,
         o.customerName || '',
         o.customerEmail || '',
@@ -407,7 +564,9 @@
         .catch((error) => setCatalogMessage(error.message, 'error'));
 
       renderOrders();
-      document.getElementById('downloadCsvBtn').addEventListener('click', downloadCSV);
+      document.getElementById('downloadCsvBtn').addEventListener('click', () => {
+        downloadCSV();
+      });
       document.getElementById('reloadCatalogBtn').addEventListener('click', () => {
         setCatalogMessage('Reloading test catalog...', 'info');
         loadCatalog()
@@ -422,7 +581,7 @@
       });
       document.getElementById('changeTokenBtn').addEventListener('click', () => {
         sessionStorage.removeItem(ADMIN_TOKEN_STORAGE_KEY);
-        renderOrders();
+        renderAdminTokenForm();
       });
     });
   </script>

@@ -399,23 +399,8 @@ function redirectToStripe() {
   });
 }
 
-// Pay Later flow
-function handlePayLater() {
-  showPage('paymentPage');
-  document.querySelector('#paymentPage .payment-title').textContent = 'Processing your order...';
-
-  sendOrderEmail('pay-later')
-    .then(() => {
-      window.location.href = `/success.html?order_id=${encodeURIComponent(orderData.orderId)}&payment_type=pay-later`;
-    })
-    .catch(() => {
-      alert('Could not send confirmation email. Please try again.');
-      showPage('invoicePage');
-    });
-}
-
 // Send order email
-function sendOrderEmail(paymentType) {
+function sendOrderEmail() {
   return fetch('/.netlify/functions/send-order-email', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -441,7 +426,7 @@ function sendOrderEmail(paymentType) {
       tests: orderData.tests,
       total: orderData.total,
       orderId: orderData.orderId,
-      paymentType: paymentType,
+      paymentType: 'pay-now',
       submittedAt: orderData.submittedAt
     })
   })
@@ -520,9 +505,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Pay Now button on invoice page
   document.getElementById('payNowBtn').addEventListener('click', redirectToStripe);
-
-  // Pay Later button on invoice page
-  document.getElementById('payLaterBtn').addEventListener('click', handlePayLater);
 
   // Back button on invoice page
   document.getElementById('backToFormBtn').addEventListener('click', () => {
