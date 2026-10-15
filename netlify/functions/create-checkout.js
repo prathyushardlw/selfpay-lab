@@ -33,6 +33,7 @@ exports.handler = async (event) => {
     const forwardedHost = event.headers['x-forwarded-host'] || event.headers.host;
     const siteUrl = process.env.URL || `${forwardedProto}://${forwardedHost}`;
 
+    const facilityId = process.env.FACILITY_ID || 'selfpay-lab';
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       line_items: lineItems,
@@ -41,7 +42,14 @@ exports.handler = async (event) => {
       metadata: {
         orderId,
         expectedAmount: String(Math.round(total * 100)),
-        source: 'selfpay-lab'
+        source: 'selfpay-lab',
+        facilityId
+      },
+      payment_intent_data: {
+        metadata: {
+          orderId,
+          facilityId
+        }
       },
       success_url: `${siteUrl}/success.html?order_id=${encodeURIComponent(orderId)}&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${siteUrl}/index.html`

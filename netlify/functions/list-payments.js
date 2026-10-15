@@ -2,6 +2,7 @@ const stripe = require('./stripe-client');
 const { assertAdminAccess } = require('./admin-auth');
 
 const PORTAL_SOURCE = 'selfpay-lab';
+const FACILITY_ID = process.env.FACILITY_ID || 'selfpay-lab';
 const DEFAULT_PAYMENT_LIMIT = 50;
 const MAX_PAYMENT_LIMIT = 100;
 const STRIPE_PAGE_LIMIT = 100;
@@ -19,10 +20,14 @@ function getPaymentLimit(value) {
 
 function isPortalPaymentSession(session) {
   const orderId = String(session.metadata?.orderId || '');
+  const sessionFacilityId = session.metadata?.facilityId;
 
   return (
     session.mode === 'payment' &&
-    (session.metadata?.source === PORTAL_SOURCE || orderId.startsWith('TG-'))
+    (sessionFacilityId
+      ? sessionFacilityId === FACILITY_ID
+      : FACILITY_ID === 'selfpay-lab' &&
+        (session.metadata?.source === PORTAL_SOURCE || orderId.startsWith('TG-')))
   );
 }
 

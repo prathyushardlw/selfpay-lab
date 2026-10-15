@@ -1,14 +1,14 @@
 const { getStore } = require('@netlify/blobs');
 
-const ATLANTA_EMAIL = 'AtlantaGA@TestGO.com';
-const SUBHASH_EMAIL = 'Subhash@TestGO.com';
-const DATA_ENTRY_EMAIL = 'de@testgo.com';
-const BILLING_EMAIL = 'billing@testgo.com';
+const ATLANTA_EMAIL = process.env.LAB_NOTIFICATION_EMAIL || 'AtlantaGA@TestGO.com';
+const SUBHASH_EMAIL = process.env.ORDER_CC_EMAIL || 'Subhash@TestGO.com';
+const DATA_ENTRY_EMAIL = process.env.DATA_ENTRY_EMAIL || 'de@testgo.com';
+const BILLING_EMAIL = process.env.BILLING_EMAIL || 'billing@testgo.com';
 
 function getConfig() {
   return {
     fromEmail: process.env.LABSQUIRE_FROM_EMAIL || 'noreply@labsquire.com',
-    apiUrl: process.env.KAKA_EMAIL_SERVICE_API_URL || 'https://services.kaka.dev/1.0',
+    apiUrl: process.env.KAKA_EMAIL_SERVICE_API_URL,
     apiKey: process.env.KAKA_EMAIL_SERVICE_KEY
   };
 }
@@ -18,6 +18,9 @@ async function sendEmail(to, subject, html, { cc, bcc } = {}) {
 
   if (!apiKey) {
     throw new Error('KAKA_EMAIL_SERVICE_KEY is not configured. Set it in Netlify environment variables.');
+  }
+  if (!apiUrl) {
+    throw new Error('KAKA_EMAIL_SERVICE_API_URL is not configured. Set it in Netlify environment variables.');
   }
 
   console.log('Sending email to:', to, cc ? `cc: ${cc}` : '', bcc ? `bcc: ${bcc}` : '');
@@ -266,7 +269,9 @@ exports.handler = async (event) => {
     const patientHtml = buildOrderEmailHtml({ ...body, signatureUrl });
     const labHtml = buildLabEmailHtml({ ...body, signatureUrl });
     const dataEntryHtml = buildDataEntryEmailHtml({ ...body, signatureUrl });
-    const subject = `Payment Confirmed - Order ${orderId} - ${firstName} ${lastName}`;
+    const facilityName = process.env.FACILITY_NAME ||
+      (process.env.FACILITY_ID === 'gapi' ? 'Gapi Self Pay' : 'Self Pay');
+    const subject = `${facilityName} - Payment Confirmed - Order ${orderId} - ${firstName} ${lastName}`;
 
     // Email 1: Patient copy - To: patient, CC: Atlanta, BCC: Subhash
     const patientEmailPromise = sendEmail(
