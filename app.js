@@ -86,7 +86,32 @@ const tubeColors = {
 // State
 const selectedTests = new Set();
 let orderData = null;
+let consentReady = false;
 const CURRENT_ORDER_STORAGE_KEY = 'testgo_current_order';
+
+async function loadPortalConsent() {
+  const consentSection = document.getElementById('consentSection');
+
+  try {
+    const response = await fetch('/.netlify/functions/get-portal-config');
+    const config = await response.json();
+
+    if (!response.ok) {
+      throw new Error(config.error || 'Unable to load portal configuration.');
+    }
+
+    if (config.facilityId === 'gapi') {
+      consentSection.innerHTML = document.getElementById('gapiConsentTemplate').innerHTML;
+    }
+
+    consentReady = true;
+  } catch (error) {
+    console.error('Failed to load portal consent configuration:', error);
+    consentSection.innerHTML = '<p role="alert" style="color:#b91c1c;">Unable to load the consent agreement. Please refresh the page before continuing.</p>';
+  } finally {
+    consentSection.hidden = false;
+  }
+}
 
 async function loadLabTests() {
   const response = await fetch('/.netlify/functions/get-test-catalog');
@@ -441,6 +466,11 @@ function setupForm() {
   const form = document.getElementById('selfPayForm');
   form.addEventListener('submit', (e) => {
     e.preventDefault();
+    if (!consentReady) {
+      alert('The consent agreement is unavailable. Please refresh the page before continuing.');
+      return;
+    }
+
     if (!validateForm()) {
       const firstError = document.querySelector('.invalid, .error-msg.visible');
       if (firstError) {
@@ -514,6 +544,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   setupDOBInput();
   setupSignaturePad();
   setupForm();
+  await loadPortalConsent();
 
   const testList = document.getElementById('testList');
   testList.innerHTML = '<p style="padding:12px;color:#666;">Loading available tests...</p>';
