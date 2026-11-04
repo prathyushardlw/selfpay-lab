@@ -1,4 +1,5 @@
 const { getStore } = require('@netlify/blobs');
+const { generateConsentPdf } = require('./consent-pdf');
 
 const ATLANTA_EMAIL = process.env.LAB_NOTIFICATION_EMAIL || 'AtlantaGA@TestGO.com';
 const SUBHASH_EMAIL = process.env.ORDER_CC_EMAIL || 'Subhash@TestGO.com';
@@ -13,7 +14,7 @@ function getConfig() {
   };
 }
 
-async function sendEmail(to, subject, html, { cc, bcc } = {}) {
+async function sendEmail(to, subject, html, { cc, bcc, attachments } = {}) {
   const { apiKey, apiUrl, fromEmail } = getConfig();
 
   if (!apiKey) {
@@ -40,6 +41,7 @@ async function sendEmail(to, subject, html, { cc, bcc } = {}) {
       toAddresses: Array.isArray(to) ? to : [to],
       ...(cc ? { ccAddresses: Array.isArray(cc) ? cc : [cc] } : {}),
       ...(bcc ? { bccAddresses: Array.isArray(bcc) ? bcc : [bcc] } : {}),
+      ...(attachments?.length ? { attachments } : {}),
       fromEmail: fromEmail
     });
 
@@ -66,7 +68,7 @@ async function sendEmail(to, subject, html, { cc, bcc } = {}) {
   }
 }
 
-function buildOrderEmailHtml({ firstName, lastName, email, phone, dob, tests, total, orderId, paymentType, submittedAt, signatureUrl }) {
+function buildOrderEmailHtml({ firstName, lastName, email, phone, dob, tests, total, orderId, paymentType, submittedAt, signatureUrl, consentPdfUrl, consentAcceptedAt }) {
   const testRows = tests.map(t => `<tr><td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;">${t.name}</td><td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;text-align:right;">$${Number(t.price).toFixed(2)}</td></tr>`).join('');
 
   const statusLabel = 'Paid Online (Stripe)';
@@ -76,6 +78,11 @@ function buildOrderEmailHtml({ firstName, lastName, email, phone, dob, tests, to
   const signatureHtml = signatureUrl ? `
         <h2 style="font-size:16px;color:#064e3b;margin:20px 0 10px;">Signature</h2>
         <img src="${signatureUrl}" alt="Patient Signature" style="max-width:300px;height:auto;border:1px solid #e2e8f0;border-radius:8px;" />` : '';
+
+  const consentHtml = consentPdfUrl ? `
+        <h2 style="font-size:16px;color:#064e3b;margin:20px 0 10px;">Consent Agreement</h2>
+        <p style="font-size:13px;color:#333;">You accepted the Participation Agreement & Liability Waiver on ${consentAcceptedAt ? new Date(consentAcceptedAt).toLocaleString('en-US', { timeZone: 'America/New_York' }) : submittedAt}.</p>
+        <a href="${consentPdfUrl}" style="display:inline-block;margin-top:8px;padding:8px 16px;background:#064e3b;color:#fff;border-radius:6px;text-decoration:none;font-size:13px;font-weight:600;">View Signed Consent (PDF)</a>` : '';
 
   return `
     <div style="font-family:'Inter',Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;">
@@ -103,12 +110,13 @@ function buildOrderEmailHtml({ firstName, lastName, email, phone, dob, tests, to
         </table>
 
         ${signatureHtml}
+        ${consentHtml}
       </div>
     </div>
   `;
 }
 
-function buildLabEmailHtml({ firstName, lastName, email, phone, dob, gender, address, city, state, zipcode, insurance, race, ethnicity, providerName, providerNPI, providerEmail, providerPhone, tests, total, orderId, paymentType, submittedAt, signatureUrl }) {
+function buildLabEmailHtml({ firstName, lastName, email, phone, dob, gender, address, city, state, zipcode, insurance, race, ethnicity, providerName, providerNPI, providerEmail, providerPhone, tests, total, orderId, paymentType, submittedAt, signatureUrl, consentPdfUrl, consentAcceptedAt }) {
   const testRows = tests.map(t => `<tr><td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;">${t.name}</td><td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;text-align:right;">$${Number(t.price).toFixed(2)}</td></tr>`).join('');
 
   const statusLabel = 'Paid Online (Stripe)';
@@ -164,6 +172,7 @@ function buildLabEmailHtml({ firstName, lastName, email, phone, dob, gender, add
         <h2 style="font-size:16px;color:#064e3b;margin:20px 0 10px;">Participant Acknowledgment</h2>
         ${signatureUrl ? `<div style="border:1px solid #e2e8f0;border-radius:8px;padding:12px;background:#f8fafc;text-align:center;"><img src="${signatureUrl}" alt="Participant Signature" style="max-width:300px;height:auto;display:inline-block;" /></div>` : '<p style="font-size:13px;color:#666;">Signature not available</p>'}
         <p style="font-size:12px;color:#666;margin-top:6px;text-align:center;">Signed on ${submittedAt}</p>
+        ${consentPdfUrl ? `<p style="margin-top:10px;text-align:center;"><a href="${consentPdfUrl}" style="font-size:13px;color:#064e3b;font-weight:600;">View Signed Consent (PDF)</a></p>` : ''}
 
         <p style="margin-top:20px;padding:12px;background:#eff6ff;border-radius:8px;font-size:13px;color:#1d4ed8;text-align:center;">&#128424; Please print this email and bring it with you to the fair as your confirmation.</p>
 
@@ -173,7 +182,7 @@ function buildLabEmailHtml({ firstName, lastName, email, phone, dob, gender, add
   `;
 }
 
-function buildDataEntryEmailHtml({ firstName, lastName, email, phone, dob, gender, address, city, state, zipcode, insurance, race, ethnicity, providerName, providerNPI, providerEmail, providerPhone, tests, orderId, submittedAt, signatureUrl }) {
+function buildDataEntryEmailHtml({ firstName, lastName, email, phone, dob, gender, address, city, state, zipcode, insurance, race, ethnicity, providerName, providerNPI, providerEmail, providerPhone, tests, orderId, submittedAt, signatureUrl, consentPdfUrl, consentAcceptedAt }) {
   const testRows = tests.map(t => `<tr><td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;">${t.name}</td></tr>`).join('');
 
   const fullAddress = [address, city, state, zipcode].filter(Boolean).join(', ');
@@ -224,6 +233,7 @@ function buildDataEntryEmailHtml({ firstName, lastName, email, phone, dob, gende
         <h2 style="font-size:16px;color:#064e3b;margin:20px 0 10px;">Participant Acknowledgment</h2>
         ${signatureUrl ? `<div style="border:1px solid #e2e8f0;border-radius:8px;padding:12px;background:#f8fafc;text-align:center;"><img src="${signatureUrl}" alt="Participant Signature" style="max-width:300px;height:auto;display:inline-block;" /></div>` : '<p style="font-size:13px;color:#666;">Signature not available</p>'}
         <p style="font-size:12px;color:#666;margin-top:6px;text-align:center;">Signed on ${submittedAt}</p>
+        ${consentPdfUrl ? `<p style="margin-top:10px;text-align:center;"><a href="${consentPdfUrl}" style="font-size:13px;color:#064e3b;font-weight:600;">View Signed Consent (PDF)</a></p>` : ''}
 
         <p style="margin-top:20px;padding:12px;background:#eff6ff;border-radius:8px;font-size:13px;color:#1d4ed8;text-align:center;">&#128424; Please print this email and bring it with you to the fair as your confirmation.</p>
 
@@ -240,7 +250,7 @@ exports.handler = async (event) => {
 
   try {
     const body = JSON.parse(event.body || '{}');
-    const { firstName, lastName, email, phone, dob, tests, total, orderId, paymentType, submittedAt, signature } = body;
+    const { firstName, lastName, email, phone, dob, tests, total, orderId, paymentType, submittedAt, signature, consentAcceptedAt, consentVersion } = body;
 
     if (!email || !orderId || !tests || !tests.length) {
       return {
@@ -250,6 +260,8 @@ exports.handler = async (event) => {
       };
     }
 
+    const siteUrl = process.env.URL || 'https://selfpayportal.netlify.app';
+
     // Store signature in Netlify Blobs and get a hosted URL
     let signatureUrl = '';
     if (signature) {
@@ -257,28 +269,54 @@ exports.handler = async (event) => {
         const base64Data = signature.replace(/^data:image\/\w+;base64,/, '');
         const store = getStore('signatures');
         await store.set(orderId, base64Data);
-        const siteUrl = process.env.URL || 'https://selfpayportal.netlify.app';
         signatureUrl = `${siteUrl}/.netlify/functions/get-signature?id=${encodeURIComponent(orderId)}`;
         console.log('Signature stored, URL:', signatureUrl);
       } catch (sigErr) {
         console.error('Failed to store signature, falling back to inline:', sigErr.message);
-        signatureUrl = signature; // fallback to data URI
+        signatureUrl = signature;
       }
     }
 
-    const patientHtml = buildOrderEmailHtml({ ...body, signatureUrl });
-    const labHtml = buildLabEmailHtml({ ...body, signatureUrl });
-    const dataEntryHtml = buildDataEntryEmailHtml({ ...body, signatureUrl });
+    // Generate consent PDF, store in Blobs, and build attachment
+    let consentPdfUrl = '';
+    let consentAttachment = null;
+    try {
+      const pdfBuffer = await generateConsentPdf({
+        firstName, lastName, dob, email,
+        consentVersion: consentVersion || 'default',
+        consentAcceptedAt,
+        signature
+      });
+      const consentStore = getStore('consent-pdfs');
+      await consentStore.set(orderId, pdfBuffer);
+      consentPdfUrl = `${siteUrl}/.netlify/functions/get-consent-pdf?id=${encodeURIComponent(orderId)}`;
+      consentAttachment = {
+        filename: `consent-${orderId}.pdf`,
+        content: pdfBuffer.toString('base64'),
+        contentType: 'application/pdf',
+        encoding: 'base64'
+      };
+      console.log('Consent PDF stored, URL:', consentPdfUrl);
+    } catch (pdfErr) {
+      console.error('Failed to generate consent PDF:', pdfErr.message);
+    }
+
+    const emailData = { ...body, signatureUrl, consentPdfUrl, consentAcceptedAt };
+    const patientHtml = buildOrderEmailHtml(emailData);
+    const labHtml = buildLabEmailHtml(emailData);
+    const dataEntryHtml = buildDataEntryEmailHtml(emailData);
     const facilityName = process.env.FACILITY_NAME ||
       (process.env.FACILITY_ID === 'gapi' ? 'Gapi Self Pay' : 'Self Pay');
     const subject = `${facilityName} - Payment Confirmed - Order ${orderId} - ${firstName} ${lastName}`;
+
+    const attachments = consentAttachment ? [consentAttachment] : undefined;
 
     // Email 1: Patient copy - To: patient, CC: Atlanta, BCC: Subhash
     const patientEmailPromise = sendEmail(
       email,
       `(Patient Copy) ${subject}`,
       patientHtml,
-      { cc: ATLANTA_EMAIL, bcc: SUBHASH_EMAIL }
+      { cc: ATLANTA_EMAIL, bcc: SUBHASH_EMAIL, attachments }
     );
 
     // Email 2: Lab copy (with full details) - To: Atlanta, CC: Subhash
@@ -286,7 +324,7 @@ exports.handler = async (event) => {
       ATLANTA_EMAIL,
       `(Lab Copy) ${subject}`,
       labHtml,
-      { cc: SUBHASH_EMAIL }
+      { cc: SUBHASH_EMAIL, attachments }
     );
 
     // Email 3: Data entry copy - To: DE, CC: Billing + Atlanta + Subhash
@@ -294,7 +332,7 @@ exports.handler = async (event) => {
       DATA_ENTRY_EMAIL,
       `(Data Entry Copy) ${subject}`,
       dataEntryHtml,
-      { cc: [BILLING_EMAIL, ATLANTA_EMAIL, SUBHASH_EMAIL] }
+      { cc: [BILLING_EMAIL, ATLANTA_EMAIL, SUBHASH_EMAIL], attachments }
     );
 
     await Promise.all([patientEmailPromise, labEmailPromise, dataEntryEmailPromise]);

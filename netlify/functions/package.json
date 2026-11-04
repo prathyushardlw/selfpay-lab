@@ -5,6 +5,7 @@
   "dependencies": {
     "@netlify/blobs": "^8.2.0",
     "@sendgrid/mail": "^8.1.6",
+    "pdfkit": "^0.15.2",
     "stripe": "^14.0.0"
   }
 }

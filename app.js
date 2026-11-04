@@ -87,6 +87,7 @@ const tubeColors = {
 const selectedTests = new Set();
 let orderData = null;
 let consentReady = false;
+let consentVersion = 'default';
 const CURRENT_ORDER_STORAGE_KEY = 'testgo_current_order';
 
 async function loadPortalConsent() {
@@ -102,6 +103,7 @@ async function loadPortalConsent() {
 
     if (config.facilityId === 'gapi') {
       consentSection.innerHTML = document.getElementById('gapiConsentTemplate').innerHTML;
+      consentVersion = 'gapi';
     }
 
     consentReady = true;
@@ -448,6 +450,8 @@ function sendOrderEmail() {
       providerEmail: orderData.providerEmail,
       providerPhone: orderData.providerPhone,
       signature: orderData.signature,
+      consentAcceptedAt: orderData.consentAcceptedAt,
+      consentVersion: orderData.consentVersion,
       tests: orderData.tests,
       total: orderData.total,
       orderId: orderData.orderId,
@@ -500,7 +504,9 @@ function setupForm() {
       providerEmail: document.getElementById('providerEmail').value.trim(),
       providerPhone: document.getElementById('providerPhone').value.trim(),
       signature: signatureCanvas.toDataURL(),
-      total: Array.from(selectedTests).reduce((sum, i) => sum + labTests[i].price, 0)
+      total: Array.from(selectedTests).reduce((sum, i) => sum + labTests[i].price, 0),
+      consentAcceptedAt: new Date().toISOString(),
+      consentVersion: consentVersion
     };
 
     // Store and go to invoice

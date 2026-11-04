@@ -467,6 +467,7 @@
               <div class="order-tests">Stripe session: ${order.sessionId}</div>
               <div class="order-tests">Transaction ID: ${order.paymentIntentId || 'Pending'}</div>
               <div class="order-tests">Checkout: ${(order.checkoutStatus || 'unknown').toUpperCase()} | Payment: ${(order.paymentStatus || 'unknown').toUpperCase()}</div>
+              ${order.orderId && order.orderId !== 'N/A' ? `<div class="order-tests"><a href="/.netlify/functions/get-consent-pdf?id=${encodeURIComponent(order.orderId)}" target="_blank" style="color:#064e3b;font-weight:600;text-decoration:none;">📄 View Signed Consent PDF</a> · <a href="/.netlify/functions/get-signature?id=${encodeURIComponent(order.orderId)}" target="_blank" style="color:#064e3b;text-decoration:none;">✍️ Signature</a></div>` : ''}
             </div>
           `;
         }).join('');
