@@ -1,5 +1,10 @@
 const { getStore } = require('@netlify/blobs');
-const { generateConsentPdf } = require('./consent-pdf');
+let generateConsentPdf;
+try {
+  ({ generateConsentPdf } = require('./consent-pdf'));
+} catch (e) {
+  console.error('consent-pdf module failed to load:', e.message);
+}
 
 const ATLANTA_EMAIL = process.env.LAB_NOTIFICATION_EMAIL || 'AtlantaGA@TestGO.com';
 const SUBHASH_EMAIL = process.env.ORDER_CC_EMAIL || 'Subhash@TestGO.com';
@@ -285,9 +290,10 @@ exports.handler = async (event) => {
       }
     }
 
-    // Generate consent PDF, store in Blobs, and build attachment
+    // Generate consent PDF, store in Blobs
     let consentPdfUrl = '';
     try {
+      if (!generateConsentPdf) throw new Error('PDF generation not available');
       const pdfBuffer = await generateConsentPdf({
         firstName, lastName, dob, email,
         consentVersion: consentVersion || 'default',

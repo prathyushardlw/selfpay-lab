@@ -1,4 +1,9 @@
-const PDFDocument = require('pdfkit');
+let PDFDocument;
+try {
+  PDFDocument = require('pdfkit');
+} catch (e) {
+  console.error('pdfkit failed to load:', e.message);
+}
 
 const CONSENT_TEXTS = {
   default: {
@@ -40,6 +45,10 @@ const CONSENT_TEXTS = {
 async function generateConsentPdf({ firstName, lastName, dob, email, consentVersion, consentAcceptedAt, signature }) {
   const version = CONSENT_TEXTS[consentVersion] || CONSENT_TEXTS.default;
   const acceptedDate = consentAcceptedAt ? new Date(consentAcceptedAt).toLocaleString('en-US', { timeZone: 'America/New_York' }) : 'N/A';
+
+  if (!PDFDocument) {
+    throw new Error('pdfkit is not available in this environment.');
+  }
 
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({ size: 'LETTER', margins: { top: 50, bottom: 50, left: 50, right: 50 } });

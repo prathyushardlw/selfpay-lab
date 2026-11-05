@@ -1,6 +1,11 @@
 const { getStore } = require('@netlify/blobs');
 const { assertAdminAccess } = require('./admin-auth');
-const { generateConsentPdf } = require('./consent-pdf');
+let generateConsentPdf;
+try {
+  ({ generateConsentPdf } = require('./consent-pdf'));
+} catch (e) {
+  console.error('consent-pdf module failed to load:', e.message);
+}
 
 const ATLANTA_EMAIL = process.env.LAB_NOTIFICATION_EMAIL || 'AtlantaGA@TestGO.com';
 const SUBHASH_EMAIL = process.env.ORDER_CC_EMAIL || 'Subhash@TestGO.com';
@@ -141,7 +146,7 @@ exports.handler = async (event) => {
       const existing = await consentStore.get(orderId, { type: 'arrayBuffer' });
       if (existing) {
         consentPdfUrl = `${siteUrl}/.netlify/functions/get-consent-pdf?id=${encodeURIComponent(orderId)}`;
-      } else if (body.signature) {
+      } else if (body.signature && generateConsentPdf) {
         const pdfBuffer = await generateConsentPdf({
           firstName, lastName, dob: body.dob, email,
           consentVersion: body.consentVersion || 'default',
