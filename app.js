@@ -408,7 +408,8 @@ function redirectToStripe() {
     body: JSON.stringify({
       testNames: orderData.tests.map((test) => test.name),
       orderId: orderData.orderId,
-      email: orderData.email
+      email: orderData.email,
+      orderData
     })
   })
   .then(res => res.json())

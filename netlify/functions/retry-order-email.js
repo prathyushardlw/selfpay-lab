@@ -128,7 +128,13 @@ exports.handler = async (event) => {
 
     const raw = await getBlobValue('orders', orderId, { type: 'text' });
     if (!raw) {
-      return { statusCode: 404, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ error: `No saved order data found for ${orderId}.` }) };
+      return {
+        statusCode: 404,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          error: `No saved patient/order data was found for ${orderId}. Stripe does not store the registration form or consent/signature, so this order cannot be resent automatically.`
+        })
+      };
     }
 
     const body = JSON.parse(raw);

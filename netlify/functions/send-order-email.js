@@ -254,7 +254,7 @@ exports.handler = async (event) => {
 
   try {
     const body = JSON.parse(event.body || '{}');
-    const { firstName, lastName, email, phone, dob, tests, total, orderId, paymentType, submittedAt, signature, consentAcceptedAt, consentVersion } = body;
+    const { email, tests, orderId } = body;
 
     if (!email || !orderId || !tests || !tests.length) {
       return {
@@ -264,27 +264,38 @@ exports.handler = async (event) => {
       };
     }
 
-    // Persist full order payload before any email/PDF work
-    try {
-      await setBlobValue('orders', orderId, JSON.stringify({ ...body, savedAt: new Date().toISOString() }));
-      console.log('Order data saved to blob storage:', orderId);
-    } catch (saveErr) {
-      console.error('Failed to save order data:', saveErr.message);
-    }
+    // Merge the success-page snapshot into the full order saved before checkout.
+    const savedOrderData = await getBlobValue('orders', orderId, { type: 'text' });
+    const savedOrder = savedOrderData ? JSON.parse(savedOrderData) : {};
+    const completeOrder = {
+      ...savedOrder,
+      ...body,
+      orderId,
+      savedAt: new Date().toISOString()
+    };
+    await setBlobValue('orders', orderId, JSON.stringify(completeOrder));
+    console.log('Order data saved to blob storage:', orderId);
 
+    const {
+      firstName,
+      lastName,
+      dob,
+      consentAcceptedAt,
+      consentVersion
+    } = completeOrder;
     const siteUrl = process.env.URL || 'https://selfpayportal.netlify.app';
 
     // Store signature in Netlify Blobs and get a hosted URL
     let signatureUrl = '';
-    if (signature) {
+    if (completeOrder.signature) {
       try {
-        const base64Data = signature.replace(/^data:image\/\w+;base64,/, '');
+        const base64Data = completeOrder.signature.replace(/^data:image\/\w+;base64,/, '');
         await setBlobValue('signatures', orderId, base64Data);
         signatureUrl = `${siteUrl}/.netlify/functions/get-signature?id=${encodeURIComponent(orderId)}`;
         console.log('Signature stored, URL:', signatureUrl);
       } catch (sigErr) {
         console.error('Failed to store signature, falling back to inline:', sigErr.message);
-        signatureUrl = signature;
+        signatureUrl = completeOrder.signature;
       }
     }
 
@@ -294,9 +305,9 @@ exports.handler = async (event) => {
       if (!generateConsentPdf) throw new Error('PDF generation not available');
       const pdfBuffer = await generateConsentPdf({
         firstName, lastName, dob, email,
-        consentVersion: consentVersion || 'default',
-        consentAcceptedAt,
-        signature
+        consentVersion: completeOrder.consentVersion || consentVersion || 'default',
+        consentAcceptedAt: completeOrder.consentAcceptedAt || consentAcceptedAt,
+        signature: completeOrder.signature
       });
       await setBlobValue('consent-pdfs', orderId, pdfBuffer);
       consentPdfUrl = `${siteUrl}/.netlify/functions/get-consent-pdf?id=${encodeURIComponent(orderId)}`;
@@ -305,7 +316,12 @@ exports.handler = async (event) => {
       console.error('Failed to generate consent PDF:', pdfErr.message);
     }
 
-    const emailData = { ...body, signatureUrl, consentPdfUrl, consentAcceptedAt };
+    const emailData = {
+      ...completeOrder,
+      signatureUrl,
+      consentPdfUrl,
+      consentAcceptedAt: completeOrder.consentAcceptedAt || consentAcceptedAt
+    };
     const patientHtml = buildOrderEmailHtml(emailData);
     const labHtml = buildLabEmailHtml(emailData);
     const dataEntryHtml = buildDataEntryEmailHtml(emailData);

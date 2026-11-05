@@ -1,5 +1,6 @@
 const stripe = require('./stripe-client');
 const { getTestsByName, calculateTotal } = require('./test-catalog');
+const { setBlobValue } = require('./blob-store');
 
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') {
@@ -7,7 +8,7 @@ exports.handler = async (event) => {
   }
 
   try {
-    const { testNames, orderId, email } = JSON.parse(event.body || '{}');
+    const { testNames, orderId, email, orderData } = JSON.parse(event.body || '{}');
 
     if (!orderId || !email) {
       return {
@@ -17,8 +18,30 @@ exports.handler = async (event) => {
       };
     }
 
+    if (
+      !orderData ||
+      typeof orderData !== 'object' ||
+      orderData.orderId !== orderId ||
+      orderData.email !== email
+    ) {
+      return {
+        statusCode: 400,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ error: 'Complete order details are required before checkout.' })
+      };
+    }
+
     const tests = await getTestsByName(testNames);
     const total = await calculateTotal(testNames);
+    await setBlobValue('orders', orderId, JSON.stringify({
+      ...orderData,
+      orderId,
+      email,
+      tests,
+      total,
+      status: 'pending',
+      savedAt: new Date().toISOString()
+    }));
 
     const lineItems = tests.map(test => ({
       price_data: {

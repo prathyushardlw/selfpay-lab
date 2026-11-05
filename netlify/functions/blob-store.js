@@ -14,6 +14,18 @@ function hasMeaningfulBlobCredential(value) {
   return !/^(optional_|placeholder_|example_|dummy_|changeme|your_)/i.test(trimmed);
 }
 
+function isLocalDevelopment() {
+  const localUrl = (process.env.URL || '').toLowerCase();
+
+  return (
+    process.env.NETLIFY_DEV === 'true' ||
+    process.env.NODE_ENV === 'development' ||
+    localUrl.includes('localhost') ||
+    localUrl.includes('127.0.0.1') ||
+    localUrl.includes('[::1]')
+  );
+}
+
 function getManualBlobsOptions() {
   const siteID = process.env.NETLIFY_BLOBS_SITE_ID || process.env.NETLIFY_SITE_ID || process.env.SITE_ID || process.env.NETLIFY_SITEID;
   const token = process.env.NETLIFY_BLOBS_TOKEN || process.env.NETLIFY_AUTH_TOKEN || process.env.NETLIFY_PERSONAL_ACCESS_TOKEN;
@@ -31,13 +43,26 @@ function isBlobConfigError(error) {
   return (
     message.includes('has not been configured to use Netlify Blobs') ||
     message.includes('The environment has not been configured to use Netlify Blobs') ||
-    message.includes('Failed to get blob') ||
-    message.includes('ECONNREFUSED') ||
-    message.includes('401') ||
     error?.statusCode === 400 ||
     error?.status === 400 ||
     error?.code === 'ERR_INVALID_URL'
   );
+}
+
+function isBlobsUnavailableError(error) {
+  return (
+    isBlobConfigError(error) ||
+    error?.message?.includes('Failed to get blob') ||
+    error?.message?.includes('ECONNREFUSED')
+  );
+}
+
+function createBlobsConfigurationError(error) {
+  const configurationError = new Error(
+    'Netlify Blobs is unavailable. Enable Blobs for this Netlify site or configure NETLIFY_BLOBS_SITE_ID and NETLIFY_BLOBS_TOKEN. Local file fallback is only available during local development.'
+  );
+  configurationError.cause = error;
+  return configurationError;
 }
 
 function getBlobStore(name) {
@@ -51,8 +76,12 @@ function getBlobStore(name) {
       ...(manualOptions || {})
     });
   } catch (error) {
-    if (isBlobConfigError(error)) {
+    if (isBlobsUnavailableError(error) && isLocalDevelopment()) {
       return null;
+    }
+
+    if (isBlobsUnavailableError(error)) {
+      throw createBlobsConfigurationError(error);
     }
 
     throw error;
@@ -127,8 +156,12 @@ async function getBlobValue(storeName, key, options = {}) {
   try {
     return await store.get(key, options);
   } catch (error) {
-    if (isBlobConfigError(error)) {
+    if (isBlobsUnavailableError(error) && isLocalDevelopment()) {
       return readLocalBlob(storeName, key, options);
+    }
+
+    if (isBlobsUnavailableError(error)) {
+      throw createBlobsConfigurationError(error);
     }
 
     throw error;
@@ -145,9 +178,13 @@ async function setBlobValue(storeName, key, value) {
   try {
     await store.set(key, value);
   } catch (error) {
-    if (isBlobConfigError(error)) {
+    if (isBlobsUnavailableError(error) && isLocalDevelopment()) {
       await writeLocalBlob(storeName, key, value);
       return;
+    }
+
+    if (isBlobsUnavailableError(error)) {
+      throw createBlobsConfigurationError(error);
     }
 
     throw error;
