@@ -14,7 +14,7 @@ function getConfig() {
   };
 }
 
-async function sendEmail(to, subject, html, { cc, bcc, attachments } = {}) {
+async function sendEmail(to, subject, html, { cc, bcc } = {}) {
   const { apiKey, apiUrl, fromEmail } = getConfig();
 
   if (!apiKey) {
@@ -41,7 +41,6 @@ async function sendEmail(to, subject, html, { cc, bcc, attachments } = {}) {
       toAddresses: Array.isArray(to) ? to : [to],
       ...(cc ? { ccAddresses: Array.isArray(cc) ? cc : [cc] } : {}),
       ...(bcc ? { bccAddresses: Array.isArray(bcc) ? bcc : [bcc] } : {}),
-      ...(attachments?.length ? { attachments } : {}),
       fromEmail: fromEmail
     });
 
@@ -279,7 +278,6 @@ exports.handler = async (event) => {
 
     // Generate consent PDF, store in Blobs, and build attachment
     let consentPdfUrl = '';
-    let consentAttachment = null;
     try {
       const pdfBuffer = await generateConsentPdf({
         firstName, lastName, dob, email,
@@ -290,12 +288,6 @@ exports.handler = async (event) => {
       const consentStore = getStore('consent-pdfs');
       await consentStore.set(orderId, pdfBuffer);
       consentPdfUrl = `${siteUrl}/.netlify/functions/get-consent-pdf?id=${encodeURIComponent(orderId)}`;
-      consentAttachment = {
-        filename: `consent-${orderId}.pdf`,
-        content: pdfBuffer.toString('base64'),
-        contentType: 'application/pdf',
-        encoding: 'base64'
-      };
       console.log('Consent PDF stored, URL:', consentPdfUrl);
     } catch (pdfErr) {
       console.error('Failed to generate consent PDF:', pdfErr.message);
@@ -309,14 +301,12 @@ exports.handler = async (event) => {
       (process.env.FACILITY_ID === 'gapi' ? 'Gapi Self Pay' : 'Self Pay');
     const subject = `${facilityName} - Payment Confirmed - Order ${orderId} - ${firstName} ${lastName}`;
 
-    const attachments = consentAttachment ? [consentAttachment] : undefined;
-
     // Email 1: Patient copy - To: patient, CC: Atlanta, BCC: Subhash
     const patientEmailPromise = sendEmail(
       email,
       `(Patient Copy) ${subject}`,
       patientHtml,
-      { cc: ATLANTA_EMAIL, bcc: SUBHASH_EMAIL, attachments }
+      { cc: ATLANTA_EMAIL, bcc: SUBHASH_EMAIL }
     );
 
     // Email 2: Lab copy (with full details) - To: Atlanta, CC: Subhash
@@ -324,7 +314,7 @@ exports.handler = async (event) => {
       ATLANTA_EMAIL,
       `(Lab Copy) ${subject}`,
       labHtml,
-      { cc: SUBHASH_EMAIL, attachments }
+      { cc: SUBHASH_EMAIL }
     );
 
     // Email 3: Data entry copy - To: DE, CC: Billing + Atlanta + Subhash
@@ -332,7 +322,7 @@ exports.handler = async (event) => {
       DATA_ENTRY_EMAIL,
       `(Data Entry Copy) ${subject}`,
       dataEntryHtml,
-      { cc: [BILLING_EMAIL, ATLANTA_EMAIL, SUBHASH_EMAIL], attachments }
+      { cc: [BILLING_EMAIL, ATLANTA_EMAIL, SUBHASH_EMAIL] }
     );
 
     await Promise.all([patientEmailPromise, labEmailPromise, dataEntryEmailPromise]);
