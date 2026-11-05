@@ -1,5 +1,5 @@
-const { getStore } = require('@netlify/blobs');
 const { assertAdminAccess } = require('./admin-auth');
+const { getBlobValue, setBlobValue } = require('./blob-store');
 let generateConsentPdf;
 try {
   ({ generateConsentPdf } = require('./consent-pdf'));
@@ -126,8 +126,7 @@ exports.handler = async (event) => {
       return { statusCode: 400, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ error: 'orderId is required.' }) };
     }
 
-    const orderStore = getStore('orders');
-    const raw = await orderStore.get(orderId, { type: 'text' });
+    const raw = await getBlobValue('orders', orderId, { type: 'text' });
     if (!raw) {
       return { statusCode: 404, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ error: `No saved order data found for ${orderId}.` }) };
     }
@@ -142,8 +141,7 @@ exports.handler = async (event) => {
     // Ensure consent PDF exists, generate if missing
     let consentPdfUrl = '';
     try {
-      const consentStore = getStore('consent-pdfs');
-      const existing = await consentStore.get(orderId, { type: 'arrayBuffer' });
+      const existing = await getBlobValue('consent-pdfs', orderId, { type: 'arrayBuffer' });
       if (existing) {
         consentPdfUrl = `${siteUrl}/.netlify/functions/get-consent-pdf?id=${encodeURIComponent(orderId)}`;
       } else if (body.signature && generateConsentPdf) {
@@ -153,7 +151,7 @@ exports.handler = async (event) => {
           consentAcceptedAt: body.consentAcceptedAt,
           signature: body.signature
         });
-        await consentStore.set(orderId, pdfBuffer);
+        await setBlobValue('consent-pdfs', orderId, pdfBuffer);
         consentPdfUrl = `${siteUrl}/.netlify/functions/get-consent-pdf?id=${encodeURIComponent(orderId)}`;
       }
     } catch (pdfErr) {

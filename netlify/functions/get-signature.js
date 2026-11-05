@@ -1,4 +1,4 @@
-const { getStore } = require('@netlify/blobs');
+const { getBlobValue } = require('./blob-store');
 
 exports.handler = async (event) => {
   if (event.httpMethod !== 'GET') {
@@ -11,8 +11,7 @@ exports.handler = async (event) => {
   }
 
   try {
-    const store = getStore('signatures');
-    const data = await store.get(orderId);
+    const data = await getBlobValue('signatures', orderId, { type: 'text' });
 
     if (!data) {
       return { statusCode: 404, body: 'Signature not found' };

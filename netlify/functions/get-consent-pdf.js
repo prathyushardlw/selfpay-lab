@@ -1,4 +1,4 @@
-const { getStore } = require('@netlify/blobs');
+const { getBlobValue } = require('./blob-store');
 
 exports.handler = async (event) => {
   if (event.httpMethod !== 'GET') {
@@ -11,8 +11,7 @@ exports.handler = async (event) => {
   }
 
   try {
-    const store = getStore('consent-pdfs');
-    const pdfBuffer = await store.get(id, { type: 'arrayBuffer' });
+    const pdfBuffer = await getBlobValue('consent-pdfs', id, { type: 'arrayBuffer' });
 
     if (!pdfBuffer) {
       return { statusCode: 404, body: 'Consent PDF not found' };

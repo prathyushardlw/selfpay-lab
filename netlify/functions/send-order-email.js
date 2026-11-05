@@ -1,4 +1,4 @@
-const { getStore } = require('@netlify/blobs');
+const { getBlobValue, setBlobValue } = require('./blob-store');
 let generateConsentPdf;
 try {
   ({ generateConsentPdf } = require('./consent-pdf'));
@@ -266,9 +266,8 @@ exports.handler = async (event) => {
 
     // Persist full order payload before any email/PDF work
     try {
-      const orderStore = getStore('orders');
-      await orderStore.set(orderId, JSON.stringify({ ...body, savedAt: new Date().toISOString() }));
-      console.log('Order data saved to Blobs:', orderId);
+      await setBlobValue('orders', orderId, JSON.stringify({ ...body, savedAt: new Date().toISOString() }));
+      console.log('Order data saved to blob storage:', orderId);
     } catch (saveErr) {
       console.error('Failed to save order data:', saveErr.message);
     }
@@ -280,8 +279,7 @@ exports.handler = async (event) => {
     if (signature) {
       try {
         const base64Data = signature.replace(/^data:image\/\w+;base64,/, '');
-        const store = getStore('signatures');
-        await store.set(orderId, base64Data);
+        await setBlobValue('signatures', orderId, base64Data);
         signatureUrl = `${siteUrl}/.netlify/functions/get-signature?id=${encodeURIComponent(orderId)}`;
         console.log('Signature stored, URL:', signatureUrl);
       } catch (sigErr) {
@@ -300,8 +298,7 @@ exports.handler = async (event) => {
         consentAcceptedAt,
         signature
       });
-      const consentStore = getStore('consent-pdfs');
-      await consentStore.set(orderId, pdfBuffer);
+      await setBlobValue('consent-pdfs', orderId, pdfBuffer);
       consentPdfUrl = `${siteUrl}/.netlify/functions/get-consent-pdf?id=${encodeURIComponent(orderId)}`;
       console.log('Consent PDF stored, URL:', consentPdfUrl);
     } catch (pdfErr) {
