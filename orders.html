@@ -456,7 +456,7 @@
           return `
             <div class="order-card">
               <div class="order-card-header">
-                <span class="order-id">${order.customerName || order.customerEmail || order.orderId}</span>
+                <span class="order-id">${escapeHtml(order.patientName || order.customerName || order.customerEmail || order.orderId)}</span>
                 <span class="order-status ${status.className}">${status.label}</span>
               </div>
               <div class="order-info">
@@ -464,6 +464,7 @@
                 <span>${formatAmount(order.amountTotal, order.currency)}</span>
                 <span>${formatDate(order.created)}</span>
               </div>
+              <div class="order-tests">Patient: ${escapeHtml(order.patientName || 'Not available')} | DOB: ${escapeHtml(order.patientDob || 'Not available')}</div>
               <div class="order-tests">Stripe session: ${order.sessionId}</div>
               <div class="order-tests">Transaction ID: ${order.paymentIntentId || 'Pending'}</div>
               <div class="order-tests">Checkout: ${(order.checkoutStatus || 'unknown').toUpperCase()} | Payment: ${(order.paymentStatus || 'unknown').toUpperCase()}</div>
@@ -555,9 +556,11 @@
 
       if (orders.length === 0) { alert('No orders to download.'); return; }
 
-      const headers = ['Order ID','Customer Name','Customer Email','Amount','Currency','Checkout Status','Payment Status','Stripe Session','Transaction ID','Created'];
+      const headers = ['Order ID','Patient Name','Patient DOB','Customer Name','Customer Email','Amount','Currency','Checkout Status','Payment Status','Stripe Session','Transaction ID','Created'];
       const rows = orders.map(o => [
         o.orderId,
+        o.patientName || '',
+        o.patientDob || '',
         o.customerName || '',
         o.customerEmail || '',
         typeof o.amountTotal === 'number' ? (o.amountTotal / 100).toFixed(2) : '',

@@ -1,5 +1,6 @@
 const stripe = require('./stripe-client');
 const { assertAdminAccess } = require('./admin-auth');
+const { getBlobValue } = require('./blob-store');
 
 const PORTAL_SOURCE = 'selfpay-lab';
 const FACILITY_ID = process.env.FACILITY_ID || 'selfpay-lab';
@@ -70,10 +71,32 @@ exports.handler = async (event) => {
       startingAfter = lastScannedSessionId;
     }
 
-    const sessionPayments = portalSessions
+    const sessionPayments = await Promise.all(portalSessions
       .slice(0, paymentLimit)
-      .map((session) => ({
+      .map(async (session) => {
+        const orderId = session.metadata?.orderId;
+        let patientName = null;
+        let patientDob = null;
+
+        if (orderId) {
+          try {
+            const rawOrder = await getBlobValue('orders', orderId, { type: 'text' });
+            const order = rawOrder ? JSON.parse(rawOrder) : null;
+            if (order?.orderId === orderId) {
+              patientName = [order.firstName, order.lastName]
+                .filter(value => typeof value === 'string' && value.trim())
+                .join(' ').trim() || null;
+              patientDob = typeof order.dob === 'string' ? order.dob : null;
+            }
+          } catch (error) {
+            console.error('Unable to load patient details for order:', orderId, error.message);
+          }
+        }
+
+        return {
         orderId: session.metadata?.orderId || 'N/A',
+        patientName,
+        patientDob,
         customerName: session.customer_details?.name || null,
         sessionId: session.id,
         paymentIntentId:
@@ -86,6 +109,7 @@ exports.handler = async (event) => {
         currency: session.currency,
         customerEmail: session.customer_details?.email || session.customer_email || null,
         created: session.created
+        };
       }));
 
     const lastPayment = sessionPayments[sessionPayments.length - 1];
