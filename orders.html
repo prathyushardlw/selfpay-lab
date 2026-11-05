@@ -467,10 +467,33 @@
               <div class="order-tests">Stripe session: ${order.sessionId}</div>
               <div class="order-tests">Transaction ID: ${order.paymentIntentId || 'Pending'}</div>
               <div class="order-tests">Checkout: ${(order.checkoutStatus || 'unknown').toUpperCase()} | Payment: ${(order.paymentStatus || 'unknown').toUpperCase()}</div>
-              ${order.orderId && order.orderId !== 'N/A' ? `<div class="order-tests"><a href="/.netlify/functions/get-consent-pdf?id=${encodeURIComponent(order.orderId)}" target="_blank" style="color:#064e3b;font-weight:600;text-decoration:none;">📄 View Signed Consent PDF</a> · <a href="/.netlify/functions/get-signature?id=${encodeURIComponent(order.orderId)}" target="_blank" style="color:#064e3b;text-decoration:none;">✍️ Signature</a></div>` : ''}
+              ${order.orderId && order.orderId !== 'N/A' ? `<div class="order-tests"><a href="/.netlify/functions/get-consent-pdf?id=${encodeURIComponent(order.orderId)}" target="_blank" style="color:#064e3b;font-weight:600;text-decoration:none;">📄 View Signed Consent PDF</a> · <a href="/.netlify/functions/get-signature?id=${encodeURIComponent(order.orderId)}" target="_blank" style="color:#064e3b;text-decoration:none;">✍️ Signature</a> · <button class="btn-retry-email" data-order-id="${order.orderId}" style="background:none;border:none;color:#1d4ed8;font-size:13px;font-weight:600;cursor:pointer;text-decoration:underline;padding:0;">🔄 Resend Emails</button></div>` : ''}
             </div>
           `;
         }).join('');
+
+        container.querySelectorAll('.btn-retry-email').forEach(btn => {
+          btn.addEventListener('click', async (e) => {
+            const oid = e.target.dataset.orderId;
+            if (!confirm(`Resend all emails for order ${oid}?`)) return;
+            e.target.textContent = 'Sending...';
+            e.target.disabled = true;
+            try {
+              const result = await fetchWithAdmin('/.netlify/functions/retry-order-email', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ orderId: oid })
+              });
+              e.target.textContent = '✅ Sent';
+              e.target.style.color = '#065f46';
+            } catch (err) {
+              alert('Retry failed: ' + err.message);
+              e.target.textContent = '🔄 Resend Emails';
+              e.target.disabled = false;
+            }
+          });
+        });
+
         renderOrdersPagination();
       } catch (error) {
         if (error.message === 'Admin token is required.' || error.message === 'Admin token was rejected.') {

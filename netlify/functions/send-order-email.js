@@ -259,6 +259,15 @@ exports.handler = async (event) => {
       };
     }
 
+    // Persist full order payload before any email/PDF work
+    try {
+      const orderStore = getStore('orders');
+      await orderStore.set(orderId, JSON.stringify({ ...body, savedAt: new Date().toISOString() }));
+      console.log('Order data saved to Blobs:', orderId);
+    } catch (saveErr) {
+      console.error('Failed to save order data:', saveErr.message);
+    }
+
     const siteUrl = process.env.URL || 'https://selfpayportal.netlify.app';
 
     // Store signature in Netlify Blobs and get a hosted URL
